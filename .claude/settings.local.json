@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm uninstall:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(ls /c/Users/barda/Desktop/V-Link/frontend/src/app/\\\\\\(auth\\\\\\)/)",
+      "Bash(ls /c/Users/barda/Desktop/V-Link/frontend/src/app/\\\\\\(dashboard\\\\\\)/)"
+    ]
+  }
+}
