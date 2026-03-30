@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
+import { EventRole } from '../../event-roles/entities/event-role.entity';
 
 @Entity('events')
 export class Event {
@@ -12,6 +13,9 @@ export class Event {
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'organizer_id' })
   organizer: User;
+
+  @OneToMany(() => EventRole, (role) => role.event, { cascade: false })
+  roles: EventRole[];
 
   @Column()
   title: string;

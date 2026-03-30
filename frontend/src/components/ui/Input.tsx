@@ -1,19 +1,39 @@
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string
+  hint?: string
   error?: string
 }
 
-export function Input({ label, error, className = '', ...props }: InputProps) {
+export function Input({ label, hint, error, className = '', ...props }: InputProps) {
   return (
-    <div className="flex flex-col gap-1">
-      {label && <label className="text-sm font-medium text-gray-700">{label}</label>}
+    <div className="flex flex-col gap-1.5">
+      {label && (
+        <label className="text-sm font-medium text-[var(--vl-dark)]">
+          {label}
+        </label>
+      )}
       <input
-        className={`border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-          error ? 'border-red-500' : 'border-gray-300'
-        } ${className}`}
+        className={[
+          'w-full rounded-lg px-3 py-2.5 text-sm',
+          'bg-[var(--vl-surface)] text-[var(--vl-dark)]',
+          'placeholder:text-[var(--vl-placeholder)]',
+          'border transition-colors duration-150',
+          'focus:outline-none focus:ring-2 focus:ring-[var(--vl-orange)] focus:ring-offset-0',
+          error
+            ? 'border-[var(--vl-error)] focus:ring-red-300'
+            : 'border-[var(--vl-border)] hover:border-[var(--vl-border-strong)] focus:border-[var(--vl-orange)]',
+          className,
+        ].join(' ')}
         {...props}
       />
-      {error && <span className="text-xs text-red-600">{error}</span>}
+      {hint && !error && (
+        <p className="text-xs text-[var(--vl-muted)]">{hint}</p>
+      )}
+      {error && (
+        <p className="text-xs text-[var(--vl-error)] flex items-center gap-1">
+          <span>⚠</span> {error}
+        </p>
+      )}
     </div>
   )
 }

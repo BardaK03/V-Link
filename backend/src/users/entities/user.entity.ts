@@ -23,6 +23,9 @@ export class User {
   @Column({ type: 'jsonb', default: {} })
   social_links: Record<string, string>;
 
+  @Column({ type: 'int', default: 0 })
+  total_points: number;
+
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date;
 }

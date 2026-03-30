@@ -1,26 +1,139 @@
 @import "tailwindcss";
 
+/* ── V-Link Design Tokens ──────────────────────────────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Brand */
+  --vl-orange:        #E8520A;
+  --vl-orange-hover:  #C94408;
+  --vl-orange-light:  #FEF0E8;
+  --vl-orange-muted:  #F97316;
+
+  /* Surfaces */
+  --vl-bg:            #FAFAF8;
+  --vl-surface:       #FFFFFF;
+  --vl-surface-raised:#F5F4F1;
+
+  /* Text */
+  --vl-dark:          #1C1917;
+  --vl-text:          #44403C;
+  --vl-muted:         #78716C;
+  --vl-placeholder:   #A8A29E;
+
+  /* Borders */
+  --vl-border:        #E7E5E4;
+  --vl-border-strong: #D6D3D1;
+
+  /* Semantic */
+  --vl-success:       #166534;
+  --vl-success-bg:    #DCFCE7;
+  --vl-warning:       #92400E;
+  --vl-warning-bg:    #FEF3C7;
+  --vl-error:         #991B1B;
+  --vl-error-bg:      #FEE2E2;
+  --vl-info:          #1E40AF;
+  --vl-info-bg:       #DBEAFE;
+
+  /* Typography */
+  --vl-font-display:  var(--font-fraunces), Georgia, serif;
+  --vl-font-body:     var(--font-dm-sans), system-ui, sans-serif;
+
+  /* Spacing / Shape */
+  --vl-radius:        8px;
+  --vl-radius-lg:     12px;
+  --vl-radius-xl:     16px;
+
+  /* Shadows */
+  --vl-shadow-sm:     0 1px 3px rgba(28, 25, 23, 0.06), 0 1px 2px rgba(28, 25, 23, 0.04);
+  --vl-shadow:        0 4px 12px rgba(28, 25, 23, 0.08), 0 1px 3px rgba(28, 25, 23, 0.05);
+  --vl-shadow-lg:     0 8px 24px rgba(28, 25, 23, 0.10), 0 2px 6px rgba(28, 25, 23, 0.06);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ── Base ──────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--vl-bg);
+  color: var(--vl-text);
+  font-family: var(--vl-font-body);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* ── Typography scale ──────────────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--vl-font-display);
+  color: var(--vl-dark);
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+h1 { font-size: clamp(2rem, 5vw, 3.25rem); }
+h2 { font-size: clamp(1.5rem, 3vw, 2rem); }
+h3 { font-size: 1.25rem; }
+
+a {
+  color: var(--vl-orange);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--vl-orange-hover);
+}
+
+/* ── Utility classes ───────────────────────────────────────────── */
+.vl-card {
+  background: var(--vl-surface);
+  border: 1px solid var(--vl-border);
+  border-radius: var(--vl-radius-lg);
+  box-shadow: var(--vl-shadow-sm);
+}
+
+.vl-card-hover {
+  transition: box-shadow 150ms ease, transform 150ms ease;
+}
+.vl-card-hover:hover {
+  box-shadow: var(--vl-shadow);
+  transform: translateY(-1px);
+}
+
+.vl-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.vl-divider {
+  border: none;
+  border-top: 1px solid var(--vl-border);
+}
+
+/* ── Focus ring ────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--vl-orange);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Selection ─────────────────────────────────────────────────── */
+::selection {
+  background: var(--vl-orange-light);
+  color: var(--vl-orange-hover);
+}
+
+/* ── Scrollbar (Webkit) ────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--vl-bg); }
+::-webkit-scrollbar-thumb {
+  background: var(--vl-border-strong);
+  border-radius: 999px;
 }

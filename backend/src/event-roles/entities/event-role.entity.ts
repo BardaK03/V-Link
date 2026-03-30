@@ -9,16 +9,25 @@ export class EventRole {
   @Column('uuid')
   event_id: string;
 
-  @ManyToOne(() => Event, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Event, (event) => event.roles, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'event_id' })
   event: Event;
 
   @Column()
   role_name: string;
 
+  @Column({ nullable: true, type: 'text' })
+  description: string;
+
   @Column({ default: 1 })
   slots_needed: number;
 
-  @Column({ type: 'int', array: true, nullable: true })
+  @Column({ default: 0 })
+  hours_required: number;
+
+  @Column({ default: 0 })
+  points_reward: number;
+
+  @Column({ type: 'int', array: true, nullable: true, default: [] })
   required_skills: number[];
 }

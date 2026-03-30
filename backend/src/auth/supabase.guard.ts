@@ -2,10 +2,14 @@ import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from
 import { ConfigService } from '@nestjs/config';
 import { createClient } from '@supabase/supabase-js';
 import { Request } from 'express';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class SupabaseGuard implements CanActivate {
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly usersService: UsersService,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
@@ -24,6 +28,15 @@ export class SupabaseGuard implements CanActivate {
 
     if (error || !data.user) {
       throw new UnauthorizedException('Token invalid sau expirat');
+    }
+
+    // Auto-create user in DB on first authenticated request
+    let dbUser = await this.usersService.findByAuthId(data.user.id);
+    if (!dbUser) {
+      dbUser = await this.usersService.create({
+        auth_id: data.user.id,
+        email: data.user.email!,
+      });
     }
 
     request['user'] = {

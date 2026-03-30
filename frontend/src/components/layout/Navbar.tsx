@@ -8,28 +8,124 @@ export function Navbar() {
   const { user, signOut } = useAuth()
 
   return (
-    <nav className="border-b bg-white">
-      <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-        <Link href="/" className="text-xl font-bold text-indigo-600">
-          V-Link
+    <nav
+      style={{
+        background: 'var(--vl-surface)',
+        borderBottom: '1px solid var(--vl-border)',
+        boxShadow: 'var(--vl-shadow-sm)',
+      }}
+    >
+      <div className="max-w-6xl mx-auto px-5 h-15 flex items-center justify-between" style={{ height: '60px' }}>
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-2 group" style={{ textDecoration: 'none' }}>
+          <span
+            style={{
+              width: 28,
+              height: 28,
+              background: 'var(--vl-orange)',
+              borderRadius: 8,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'transform 150ms ease',
+            }}
+            className="group-hover:scale-110"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M7 1L13 4V10L7 13L1 10V4L7 1Z" fill="white" fillOpacity="0.9"/>
+              <path d="M7 4L10 5.5V8.5L7 10L4 8.5V5.5L7 4Z" fill="white"/>
+            </svg>
+          </span>
+          <span
+            style={{
+              fontFamily: 'var(--vl-font-display)',
+              fontSize: '1.2rem',
+              fontWeight: 700,
+              color: 'var(--vl-dark)',
+              letterSpacing: '-0.02em',
+            }}
+          >
+            V-Link
+          </span>
         </Link>
-        <div className="flex items-center gap-4">
+
+        {/* Nav actions */}
+        <div className="flex items-center gap-3">
           {user ? (
             <>
-              <Link href="/dashboard" className="text-sm text-gray-600 hover:text-gray-900">
+              <Link
+                href="/events"
+                style={{
+                  fontSize: '0.875rem',
+                  color: 'var(--vl-muted)',
+                  fontWeight: 500,
+                  textDecoration: 'none',
+                  transition: 'color 150ms',
+                }}
+                className="hover:text-[var(--vl-dark)]"
+              >
+                Evenimente
+              </Link>
+              <Link
+                href="/rewards"
+                style={{
+                  fontSize: '0.875rem',
+                  color: 'var(--vl-muted)',
+                  fontWeight: 500,
+                  textDecoration: 'none',
+                  transition: 'color 150ms',
+                }}
+                className="hover:text-[var(--vl-dark)]"
+              >
+                Recompense
+              </Link>
+              <Link
+                href="/leaderboard"
+                style={{
+                  fontSize: '0.875rem',
+                  color: 'var(--vl-muted)',
+                  fontWeight: 500,
+                  textDecoration: 'none',
+                  transition: 'color 150ms',
+                }}
+                className="hover:text-[var(--vl-dark)]"
+              >
+                Clasament
+              </Link>
+              <Link
+                href="/dashboard"
+                style={{
+                  fontSize: '0.875rem',
+                  color: 'var(--vl-muted)',
+                  fontWeight: 500,
+                  textDecoration: 'none',
+                  transition: 'color 150ms',
+                }}
+                className="hover:text-[var(--vl-dark)]"
+              >
                 Dashboard
               </Link>
-              <Button variant="secondary" onClick={signOut} className="text-sm">
+              <Button variant="secondary" size="sm" onClick={signOut}>
                 Deconectare
               </Button>
             </>
           ) : (
             <>
-              <Link href="/login" className="text-sm text-gray-600 hover:text-gray-900">
+              <Link
+                href="/login"
+                style={{
+                  fontSize: '0.875rem',
+                  color: 'var(--vl-muted)',
+                  fontWeight: 500,
+                  textDecoration: 'none',
+                  transition: 'color 150ms',
+                }}
+                className="hover:text-[var(--vl-dark)]"
+              >
                 Autentificare
               </Link>
               <Link href="/register">
-                <Button className="text-sm">Înregistrare</Button>
+                <Button size="sm">Înregistrare</Button>
               </Link>
             </>
           )}

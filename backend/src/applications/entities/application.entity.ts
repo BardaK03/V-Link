@@ -29,8 +29,8 @@ export class Application {
   @JoinColumn({ name: 'role_id' })
   role: EventRole;
 
-  @Column({ nullable: true })
-  match_score: number;
+  @Column({ nullable: true, type: 'int' })
+  match_score: number | null;
 
   @Column({ type: 'enum', enum: ApplicationStatus, default: ApplicationStatus.PENDING })
   status: ApplicationStatus;
