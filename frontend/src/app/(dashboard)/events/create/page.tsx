@@ -17,6 +17,12 @@ interface RoleForm {
   points_reward: string
 }
 
+const inputStyle = {
+  border: '1px solid var(--vl-border)',
+  borderRadius: 'var(--vl-radius)',
+  color: 'var(--vl-text)',
+}
+
 export default function CreateEventPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
@@ -35,7 +41,7 @@ export default function CreateEventPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500">Se încarcă...</p>
+        <p style={{ color: 'var(--vl-muted)' }}>Se încarcă...</p>
       </div>
     )
   }
@@ -96,18 +102,18 @@ export default function CreateEventPage() {
       <Navbar />
       <main className="max-w-2xl mx-auto px-4 py-8">
         <div className="mb-4">
-          <Link href="/events" className="text-blue-600 text-sm hover:underline">
+          <Link href="/events" className="text-sm hover:underline" style={{ color: 'var(--vl-orange)' }}>
             ← Înapoi la evenimente
           </Link>
         </div>
 
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Eveniment nou</h1>
+        <h1 className="text-2xl font-bold mb-6" style={{ color: 'var(--vl-dark)', fontFamily: 'var(--vl-font-display)' }}>Eveniment nou</h1>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">{error}</div>
+          <div className="mb-4 p-3 rounded-lg text-sm" style={{ backgroundColor: 'var(--vl-error-bg)', color: 'var(--vl-error)' }}>{error}</div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5 bg-white border rounded-xl p-6">
+        <form onSubmit={handleSubmit} className="space-y-5 rounded-xl p-6" style={{ backgroundColor: 'var(--vl-surface)', border: '1px solid var(--vl-border)', borderRadius: 'var(--vl-radius-lg)' }}>
           <Input
             label="Titlu *"
             value={title}
@@ -115,12 +121,13 @@ export default function CreateEventPage() {
             required
           />
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Descriere</label>
+            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--vl-text)' }}>Descriere</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 text-sm focus:outline-none"
+              style={inputStyle}
             />
           </div>
           <Input
@@ -131,48 +138,52 @@ export default function CreateEventPage() {
           />
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Data start *</label>
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--vl-text)' }}>Data start *</label>
               <input
                 type="datetime-local"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
                 required
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-sm focus:outline-none"
+                style={inputStyle}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Data sfârșit *</label>
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--vl-text)' }}>Data sfârșit *</label>
               <input
                 type="datetime-local"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
                 required
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-sm focus:outline-none"
+                style={inputStyle}
               />
             </div>
           </div>
 
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium text-gray-700">Roluri</label>
+              <label className="text-sm font-medium" style={{ color: 'var(--vl-text)' }}>Roluri</label>
               <button
                 type="button"
                 onClick={addRole}
-                className="text-blue-600 text-sm hover:underline"
+                className="text-sm hover:underline"
+                style={{ color: 'var(--vl-orange)' }}
               >
                 + Adaugă rol
               </button>
             </div>
             <div className="space-y-4">
               {roles.map((role, i) => (
-                <div key={i} className="border border-gray-200 rounded-lg p-4 space-y-3">
+                <div key={i} className="rounded-lg p-4 space-y-3" style={{ border: '1px solid var(--vl-border)', borderRadius: 'var(--vl-radius)' }}>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-600">Rol #{i + 1}</span>
+                    <span className="text-sm font-medium" style={{ color: 'var(--vl-text)' }}>Rol #{i + 1}</span>
                     {roles.length > 1 && (
                       <button
                         type="button"
                         onClick={() => removeRole(i)}
-                        className="text-red-500 text-sm hover:text-red-700"
+                        className="text-sm hover:underline"
+                        style={{ color: 'var(--vl-error)' }}
                       >
                         Șterge
                       </button>
@@ -183,44 +194,49 @@ export default function CreateEventPage() {
                     placeholder="Nume rol (ex: Voluntar intrare)"
                     value={role.role_name}
                     onChange={(e) => updateRole(i, 'role_name', e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm focus:outline-none"
+                    style={inputStyle}
                   />
                   <textarea
                     placeholder="Descriere scurtă a rolului"
                     value={role.description}
                     onChange={(e) => updateRole(i, 'description', e.target.value)}
                     rows={2}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm focus:outline-none"
+                    style={inputStyle}
                   />
                   <div className="grid grid-cols-3 gap-3">
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">Locuri disponibile</label>
+                      <label className="block text-xs mb-1" style={{ color: 'var(--vl-muted)' }}>Locuri disponibile</label>
                       <input
                         type="number"
                         min={1}
                         value={role.slots_needed}
                         onChange={(e) => updateRole(i, 'slots_needed', e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 text-sm focus:outline-none"
+                        style={inputStyle}
                       />
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">Ore necesare</label>
+                      <label className="block text-xs mb-1" style={{ color: 'var(--vl-muted)' }}>Ore necesare</label>
                       <input
                         type="number"
                         min={0}
                         value={role.hours_required}
                         onChange={(e) => updateRole(i, 'hours_required', e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 text-sm focus:outline-none"
+                        style={inputStyle}
                       />
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">Puncte recompensă</label>
+                      <label className="block text-xs mb-1" style={{ color: 'var(--vl-muted)' }}>Puncte recompensă</label>
                       <input
                         type="number"
                         min={0}
                         value={role.points_reward}
                         onChange={(e) => updateRole(i, 'points_reward', e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 text-sm focus:outline-none"
+                        style={inputStyle}
                       />
                     </div>
                   </div>

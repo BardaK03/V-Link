@@ -31,7 +31,7 @@ export default function EventsPage() {
   if (loading || fetching) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500">Se încarcă...</p>
+        <p style={{ color: 'var(--vl-muted)' }}>Se încarcă...</p>
       </div>
     )
   }
@@ -45,7 +45,7 @@ export default function EventsPage() {
       <Navbar />
       <main className="max-w-4xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Evenimente</h1>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--vl-dark)', fontFamily: 'var(--vl-font-display)' }}>Evenimente</h1>
           {isOrganizer && (
             <Link href="/events/create">
               <Button>+ Eveniment nou</Button>
@@ -54,25 +54,25 @@ export default function EventsPage() {
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">{error}</div>
+          <div className="mb-4 p-3 rounded-lg text-sm" style={{ backgroundColor: 'var(--vl-error-bg)', color: 'var(--vl-error)' }}>{error}</div>
         )}
 
         {events.length === 0 ? (
-          <p className="text-gray-500 text-center py-16">Nu există evenimente momentan.</p>
+          <p className="text-center py-16" style={{ color: 'var(--vl-muted)' }}>Nu există evenimente momentan.</p>
         ) : (
           <div className="space-y-4">
             {events.map((event) => (
               <Link key={event.id} href={`/events/${event.id}`}>
-                <div className="bg-white border rounded-xl p-5 hover:shadow-md transition-shadow cursor-pointer">
+                <div className="rounded-xl p-5 hover:shadow-md transition-shadow cursor-pointer" style={{ backgroundColor: 'var(--vl-surface)', border: '1px solid var(--vl-border)', borderRadius: 'var(--vl-radius-lg)' }}>
                   <div className="flex items-start justify-between">
                     <div>
-                      <h2 className="font-semibold text-gray-900 text-lg">{event.title}</h2>
+                      <h2 className="font-semibold text-lg" style={{ color: 'var(--vl-dark)' }}>{event.title}</h2>
                       {event.description && (
-                        <p className="text-gray-500 text-sm mt-1 line-clamp-2">{event.description}</p>
+                        <p className="text-sm mt-1 line-clamp-2" style={{ color: 'var(--vl-muted)' }}>{event.description}</p>
                       )}
-                      <p className="text-gray-400 text-xs mt-2">📍 {event.address}</p>
+                      <p className="text-xs mt-2" style={{ color: 'var(--vl-muted)' }}>📍 {event.address}</p>
                     </div>
-                    <span className="text-sm text-gray-400 whitespace-nowrap ml-4">
+                    <span className="text-sm whitespace-nowrap ml-4" style={{ color: 'var(--vl-muted)' }}>
                       {new Date(event.start_date).toLocaleDateString('ro-RO')}
                     </span>
                   </div>
@@ -81,7 +81,8 @@ export default function EventsPage() {
                       {event.roles.map((role) => (
                         <span
                           key={role.id}
-                          className="bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-full"
+                          className="text-xs px-2 py-1 rounded-full"
+                          style={{ backgroundColor: 'var(--vl-info-bg)', color: 'var(--vl-info)' }}
                         >
                           {role.role_name} ({role.slots_needed} locuri)
                         </span>

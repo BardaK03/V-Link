@@ -32,13 +32,13 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md bg-white rounded-xl shadow-sm border p-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Bun venit înapoi</h1>
-        <p className="text-sm text-gray-500 mb-6">Autentifică-te în contul tău V-Link</p>
+    <main className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: 'var(--vl-bg)' }}>
+      <div className="w-full max-w-md rounded-xl p-8" style={{ backgroundColor: 'var(--vl-surface)', borderRadius: 'var(--vl-radius-lg)', boxShadow: 'var(--vl-shadow-sm)', border: '1px solid var(--vl-border)' }}>
+        <h1 className="text-2xl font-bold mb-2" style={{ color: 'var(--vl-dark)', fontFamily: 'var(--vl-font-display)' }}>Bun venit înapoi</h1>
+        <p className="text-sm mb-6" style={{ color: 'var(--vl-muted)' }}>Autentifică-te în contul tău V-Link</p>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+          <div className="mb-4 p-3 rounded-lg text-sm" style={{ backgroundColor: 'var(--vl-error-bg)', border: '1px solid var(--vl-error-bg)', color: 'var(--vl-error)' }}>
             {error}
           </div>
         )}
@@ -65,9 +65,9 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-gray-600">
+        <p className="mt-6 text-center text-sm" style={{ color: 'var(--vl-text)' }}>
           Nu ai cont?{' '}
-          <Link href="/register" className="text-indigo-600 hover:underline font-medium">
+          <Link href="/register" className="hover:underline font-medium" style={{ color: 'var(--vl-orange)' }}>
             Înregistrează-te
           </Link>
         </p>

@@ -43,14 +43,14 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-        <div className="w-full max-w-md bg-white rounded-xl shadow-sm border p-8 text-center">
+      <main className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: 'var(--vl-bg)' }}>
+        <div className="w-full max-w-md rounded-xl p-8 text-center" style={{ backgroundColor: 'var(--vl-surface)', borderRadius: 'var(--vl-radius-lg)', boxShadow: 'var(--vl-shadow-sm)', border: '1px solid var(--vl-border)' }}>
           <div className="text-4xl mb-4">✉️</div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Verifică-ți emailul!</h2>
-          <p className="text-sm text-gray-600">
+          <h2 className="text-xl font-bold mb-2" style={{ color: 'var(--vl-dark)', fontFamily: 'var(--vl-font-display)' }}>Verifică-ți emailul!</h2>
+          <p className="text-sm" style={{ color: 'var(--vl-text)' }}>
             Am trimis un link de confirmare la <strong>{email}</strong>. Confirmă contul pentru a te autentifica.
           </p>
-          <Link href="/login" className="mt-6 inline-block text-sm text-indigo-600 hover:underline">
+          <Link href="/login" className="mt-6 inline-block text-sm hover:underline" style={{ color: 'var(--vl-orange)' }}>
             Înapoi la autentificare
           </Link>
         </div>
@@ -59,13 +59,13 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md bg-white rounded-xl shadow-sm border p-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Creează cont</h1>
-        <p className="text-sm text-gray-500 mb-6">Alătură-te comunității V-Link</p>
+    <main className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: 'var(--vl-bg)' }}>
+      <div className="w-full max-w-md rounded-xl p-8" style={{ backgroundColor: 'var(--vl-surface)', borderRadius: 'var(--vl-radius-lg)', boxShadow: 'var(--vl-shadow-sm)', border: '1px solid var(--vl-border)' }}>
+        <h1 className="text-2xl font-bold mb-2" style={{ color: 'var(--vl-dark)', fontFamily: 'var(--vl-font-display)' }}>Creează cont</h1>
+        <p className="text-sm mb-6" style={{ color: 'var(--vl-muted)' }}>Alătură-te comunității V-Link</p>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+          <div className="mb-4 p-3 rounded-lg text-sm" style={{ backgroundColor: 'var(--vl-error-bg)', border: '1px solid var(--vl-error-bg)', color: 'var(--vl-error)' }}>
             {error}
           </div>
         )}
@@ -100,9 +100,9 @@ export default function RegisterPage() {
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-gray-600">
+        <p className="mt-6 text-center text-sm" style={{ color: 'var(--vl-text)' }}>
           Ai deja cont?{' '}
-          <Link href="/login" className="text-indigo-600 hover:underline font-medium">
+          <Link href="/login" className="hover:underline font-medium" style={{ color: 'var(--vl-orange)' }}>
             Autentifică-te
           </Link>
         </p>

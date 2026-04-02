@@ -15,6 +15,12 @@ function toLocalDatetime(iso: string): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
+const inputStyle = {
+  border: '1px solid var(--vl-border)',
+  borderRadius: 'var(--vl-radius)',
+  color: 'var(--vl-text)',
+}
+
 export default function EditEventPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
@@ -53,7 +59,7 @@ export default function EditEventPage() {
   if (loading || fetching) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500">Se încarcă...</p>
+        <p style={{ color: 'var(--vl-muted)' }}>Se încarcă...</p>
       </div>
     )
   }
@@ -85,18 +91,18 @@ export default function EditEventPage() {
       <Navbar />
       <main className="max-w-2xl mx-auto px-4 py-8">
         <div className="mb-4">
-          <Link href={`/events/${id}`} className="text-blue-600 text-sm hover:underline">
+          <Link href={`/events/${id}`} className="text-sm hover:underline" style={{ color: 'var(--vl-orange)' }}>
             ← Înapoi la eveniment
           </Link>
         </div>
 
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Editează eveniment</h1>
+        <h1 className="text-2xl font-bold mb-6" style={{ color: 'var(--vl-dark)', fontFamily: 'var(--vl-font-display)' }}>Editează eveniment</h1>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">{error}</div>
+          <div className="mb-4 p-3 rounded-lg text-sm" style={{ backgroundColor: 'var(--vl-error-bg)', color: 'var(--vl-error)' }}>{error}</div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5 bg-white border rounded-xl p-6">
+        <form onSubmit={handleSubmit} className="space-y-5 rounded-xl p-6" style={{ backgroundColor: 'var(--vl-surface)', border: '1px solid var(--vl-border)', borderRadius: 'var(--vl-radius-lg)' }}>
           <Input
             label="Titlu *"
             value={title}
@@ -104,12 +110,13 @@ export default function EditEventPage() {
             required
           />
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Descriere</label>
+            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--vl-text)' }}>Descriere</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 text-sm focus:outline-none"
+              style={inputStyle}
             />
           </div>
           <Input
@@ -120,23 +127,25 @@ export default function EditEventPage() {
           />
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Data start *</label>
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--vl-text)' }}>Data start *</label>
               <input
                 type="datetime-local"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
                 required
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-sm focus:outline-none"
+                style={inputStyle}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Data sfârșit *</label>
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--vl-text)' }}>Data sfârșit *</label>
               <input
                 type="datetime-local"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
                 required
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-sm focus:outline-none"
+                style={inputStyle}
               />
             </div>
           </div>
