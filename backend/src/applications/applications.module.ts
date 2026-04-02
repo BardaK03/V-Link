@@ -10,6 +10,7 @@ import { EventsModule } from '../events/events.module';
 import { AuthModule } from '../auth/auth.module';
 import { MatchingModule } from '../matching/matching.module';
 import { GamificationModule } from '../gamification/gamification.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { GamificationModule } from '../gamification/gamification.module';
     AuthModule,
     MatchingModule,
     GamificationModule,
+    NotificationsModule,
   ],
   providers: [ApplicationsService],
   controllers: [ApplicationsController],

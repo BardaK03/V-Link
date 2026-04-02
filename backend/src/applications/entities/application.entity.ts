@@ -35,6 +35,12 @@ export class Application {
   @Column({ type: 'enum', enum: ApplicationStatus, default: ApplicationStatus.PENDING })
   status: ApplicationStatus;
 
+  @Column({ nullable: true, type: 'text' })
+  motivation_text: string | null;
+
+  @Column({ nullable: true, type: 'text' })
+  recommendation_text: string | null;
+
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date;
 }

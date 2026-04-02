@@ -8,6 +8,8 @@ import { EventRolesModule } from './event-roles/event-roles.module';
 import { ApplicationsModule } from './applications/applications.module';
 import { GamificationModule } from './gamification/gamification.module';
 import { VolunteerLogsModule } from './volunteer-logs/volunteer-logs.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { SkillsModule } from './skills/skills.module';
 
 @Module({
   imports: [
@@ -40,6 +42,8 @@ import { VolunteerLogsModule } from './volunteer-logs/volunteer-logs.module';
     ApplicationsModule,
     GamificationModule,
     VolunteerLogsModule,
+    NotificationsModule,
+    SkillsModule,
   ],
 })
 export class AppModule {}

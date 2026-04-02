@@ -11,24 +11,28 @@ import {
   applyToRole,
   deleteEvent,
   type Event,
+  type EventRole,
 } from '@/lib/api'
 
 export default function EventDetailPage() {
-  const { user, loading } = useAuth()
+  const { user, dbUser, loading } = useAuth()
   const router = useRouter()
   const { id } = useParams<{ id: string }>()
+
   const [event, setEvent] = useState<Event | null>(null)
   const [fetching, setFetching] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [applying, setApplying] = useState<string | null>(null)
   const [appliedRoles, setAppliedRoles] = useState<Set<string>>(new Set())
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
 
+  // Modal state
+  const [applyRole, setApplyRole] = useState<EventRole | null>(null)
+  const [motivationText, setMotivationText] = useState('')
+  const [recommendationText, setRecommendationText] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login')
-      return
-    }
+    if (!loading && !user) { router.push('/login'); return }
     if (user && id) {
       getEvent(id)
         .then(setEvent)
@@ -39,8 +43,8 @@ export default function EventDetailPage() {
 
   if (loading || fetching) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500">Se încarcă...</p>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--vl-bg)' }}>
+        <p style={{ color: 'var(--vl-muted)' }}>Se încarcă...</p>
       </div>
     )
   }
@@ -48,19 +52,32 @@ export default function EventDetailPage() {
   if (!user || !event) return null
 
   const isOwner = event.organizer?.id === user.id || event.organizer_id === user.id
+  const isVolunteer = !isOwner && dbUser?.role !== 'ADMIN'
 
-  const handleApply = async (roleId: string) => {
-    setApplying(roleId)
+  const openApplyModal = (role: EventRole) => {
+    setApplyRole(role)
+    setMotivationText('')
+    setRecommendationText('')
     setError(null)
-    setSuccessMsg(null)
+  }
+
+  const handleSubmitApply = async () => {
+    if (!applyRole) return
+    setSubmitting(true)
+    setError(null)
     try {
-      await applyToRole(roleId)
-      setAppliedRoles((prev) => new Set(prev).add(roleId))
-      setSuccessMsg('Aplicație trimisă cu succes!')
+      await applyToRole({
+        role_id: applyRole.id,
+        motivation_text: motivationText.trim() || undefined,
+        recommendation_text: recommendationText.trim() || undefined,
+      })
+      setAppliedRoles((prev) => new Set(prev).add(applyRole.id))
+      setSuccessMsg(`Aplicație trimisă pentru rolul "${applyRole.role_name}"!`)
+      setApplyRole(null)
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Eroare necunoscută')
     } finally {
-      setApplying(null)
+      setSubmitting(false)
     }
   }
 
@@ -77,32 +94,42 @@ export default function EventDetailPage() {
   return (
     <>
       <Navbar />
-      <main className="max-w-3xl mx-auto px-4 py-8">
+      <main className="max-w-3xl mx-auto px-4 py-8" style={{ background: 'var(--vl-bg)', minHeight: '100vh' }}>
         <div className="mb-4">
-          <Link href="/events" className="text-blue-600 text-sm hover:underline">
+          <Link href="/events" className="text-sm hover:underline" style={{ color: 'var(--vl-orange)' }}>
             ← Înapoi la evenimente
           </Link>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">{error}</div>
+          <div className="mb-4 p-3 rounded-lg text-sm" style={{ background: 'var(--vl-error-bg)', color: 'var(--vl-error)' }}>
+            {error}
+          </div>
         )}
         {successMsg && (
-          <div className="mb-4 p-3 bg-green-50 text-green-700 rounded-lg text-sm">{successMsg}</div>
+          <div className="mb-4 p-3 rounded-lg text-sm" style={{ background: 'var(--vl-success-bg)', color: 'var(--vl-success)' }}>
+            {successMsg}
+          </div>
         )}
 
-        <div className="bg-white border rounded-xl p-6">
-          <div className="flex items-start justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">{event.title}</h1>
+        {/* Event card */}
+        <div className="rounded-xl border p-6 mb-6" style={{ background: 'var(--vl-surface)', borderColor: 'var(--vl-border)' }}>
+          <div className="flex items-start justify-between gap-4">
+            <h1
+              className="text-2xl font-bold"
+              style={{ fontFamily: 'var(--vl-font-display)', color: 'var(--vl-dark)' }}
+            >
+              {event.title}
+            </h1>
             {isOwner && (
-              <div className="flex gap-2 ml-4">
+              <div className="flex gap-2 shrink-0">
                 <Link href={`/events/${id}/edit`}>
-                  <Button variant="secondary">Editează</Button>
+                  <Button variant="secondary" size="sm">Editează</Button>
                 </Link>
                 <Link href={`/events/${id}/applications`}>
-                  <Button variant="secondary">Aplicații</Button>
+                  <Button variant="secondary" size="sm">Aplicații</Button>
                 </Link>
-                <Button variant="secondary" onClick={handleDelete}>
+                <Button variant="secondary" size="sm" onClick={handleDelete}>
                   Șterge
                 </Button>
               </div>
@@ -110,57 +137,158 @@ export default function EventDetailPage() {
           </div>
 
           {event.description && (
-            <p className="text-gray-600 mt-3">{event.description}</p>
+            <p className="mt-3 text-sm" style={{ color: 'var(--vl-text)' }}>{event.description}</p>
           )}
 
-          <div className="mt-4 grid grid-cols-2 gap-4 text-sm text-gray-500">
+          <div className="mt-4 grid grid-cols-2 gap-3 text-sm" style={{ color: 'var(--vl-muted)' }}>
+            <div><span style={{ color: 'var(--vl-dark)', fontWeight: 500 }}>Locație:</span> {event.address}</div>
             <div>
-              <span className="font-medium text-gray-700">Locație:</span> {event.address}
-            </div>
-            <div>
-              <span className="font-medium text-gray-700">Start:</span>{' '}
+              <span style={{ color: 'var(--vl-dark)', fontWeight: 500 }}>Start:</span>{' '}
               {new Date(event.start_date).toLocaleString('ro-RO')}
             </div>
             <div>
-              <span className="font-medium text-gray-700">Sfârșit:</span>{' '}
+              <span style={{ color: 'var(--vl-dark)', fontWeight: 500 }}>Sfârșit:</span>{' '}
               {new Date(event.end_date).toLocaleString('ro-RO')}
             </div>
             <div>
-              <span className="font-medium text-gray-700">Organizator:</span>{' '}
+              <span style={{ color: 'var(--vl-dark)', fontWeight: 500 }}>Organizator:</span>{' '}
               {event.organizer?.email}
             </div>
           </div>
         </div>
 
-        <div className="mt-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Roluri disponibile</h2>
-          {(!event.roles || event.roles.length === 0) ? (
-            <p className="text-gray-500 text-sm">Nu există roluri definite pentru acest eveniment.</p>
-          ) : (
-            <div className="space-y-3">
-              {event.roles.map((role) => (
-                <div
-                  key={role.id}
-                  className="bg-white border rounded-lg p-4 flex items-center justify-between"
-                >
-                  <div>
-                    <p className="font-medium text-gray-900">{role.role_name}</p>
-                    <p className="text-sm text-gray-500">{role.slots_needed} locuri disponibile</p>
+        {/* Roles */}
+        <h2 className="text-lg font-semibold mb-3" style={{ color: 'var(--vl-dark)' }}>
+          Roluri disponibile
+        </h2>
+        {(!event.roles || event.roles.length === 0) ? (
+          <p className="text-sm" style={{ color: 'var(--vl-muted)' }}>Nu există roluri definite pentru acest eveniment.</p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {event.roles.map((role) => (
+              <div
+                key={role.id}
+                className="rounded-xl border p-4"
+                style={{ background: 'var(--vl-surface)', borderColor: 'var(--vl-border)' }}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold" style={{ color: 'var(--vl-dark)' }}>{role.role_name}</p>
+                    {role.description && (
+                      <p className="text-sm mt-0.5" style={{ color: 'var(--vl-muted)' }}>{role.description}</p>
+                    )}
+                    <div className="flex flex-wrap gap-3 mt-2 text-sm" style={{ color: 'var(--vl-muted)' }}>
+                      <span>👥 {role.slots_needed} locuri</span>
+                      <span>⏱ {role.hours_required}h</span>
+                      <span
+                        className="font-semibold"
+                        style={{ color: 'var(--vl-orange)' }}
+                      >
+                        🏆 {role.points_reward} puncte
+                      </span>
+                    </div>
                   </div>
-                  {!isOwner && (
+                  {isVolunteer && (
                     <Button
-                      onClick={() => handleApply(role.id)}
-                      disabled={applying === role.id || appliedRoles.has(role.id)}
+                      variant={appliedRoles.has(role.id) ? 'secondary' : 'primary'}
+                      size="sm"
+                      disabled={appliedRoles.has(role.id)}
+                      onClick={() => openApplyModal(role)}
                     >
-                      {appliedRoles.has(role.id) ? 'Aplicat ✓' : applying === role.id ? 'Se trimite...' : 'Aplică'}
+                      {appliedRoles.has(role.id) ? 'Aplicat ✓' : 'Aplică'}
                     </Button>
                   )}
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+              </div>
+            ))}
+          </div>
+        )}
       </main>
+
+      {/* Apply modal */}
+      {applyRole && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.45)' }}
+          onClick={(e) => { if (e.target === e.currentTarget) setApplyRole(null) }}
+        >
+          <div
+            className="w-full max-w-lg rounded-2xl p-6"
+            style={{ background: 'var(--vl-surface)', boxShadow: 'var(--vl-shadow-lg)' }}
+          >
+            <h2
+              className="text-xl font-bold mb-1"
+              style={{ fontFamily: 'var(--vl-font-display)', color: 'var(--vl-dark)' }}
+            >
+              Aplică pentru "{applyRole.role_name}"
+            </h2>
+            <p className="text-sm mb-5" style={{ color: 'var(--vl-muted)' }}>
+              🏆 {applyRole.points_reward} puncte · ⏱ {applyRole.hours_required}h
+            </p>
+
+            {error && (
+              <div className="mb-4 p-3 rounded-lg text-sm" style={{ background: 'var(--vl-error-bg)', color: 'var(--vl-error)' }}>
+                {error}
+              </div>
+            )}
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--vl-dark)' }}>
+                De ce vrei să aplici? <span style={{ color: 'var(--vl-muted)', fontWeight: 400 }}>(opțional)</span>
+              </label>
+              <textarea
+                rows={3}
+                placeholder="Descrie motivația ta pentru acest rol..."
+                value={motivationText}
+                onChange={(e) => setMotivationText(e.target.value)}
+                maxLength={1000}
+                className="w-full rounded-lg px-3 py-2 text-sm resize-none"
+                style={{
+                  border: '1px solid var(--vl-border)',
+                  outline: 'none',
+                  color: 'var(--vl-text)',
+                  background: 'var(--vl-bg)',
+                }}
+              />
+              <p className="text-xs mt-1 text-right" style={{ color: 'var(--vl-muted)' }}>
+                {motivationText.length}/1000
+              </p>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--vl-dark)' }}>
+                Ce te recomandă? <span style={{ color: 'var(--vl-muted)', fontWeight: 400 }}>(opțional)</span>
+              </label>
+              <textarea
+                rows={3}
+                placeholder="Experiență relevantă, skill-uri, proiecte anterioare..."
+                value={recommendationText}
+                onChange={(e) => setRecommendationText(e.target.value)}
+                maxLength={1000}
+                className="w-full rounded-lg px-3 py-2 text-sm resize-none"
+                style={{
+                  border: '1px solid var(--vl-border)',
+                  outline: 'none',
+                  color: 'var(--vl-text)',
+                  background: 'var(--vl-bg)',
+                }}
+              />
+              <p className="text-xs mt-1 text-right" style={{ color: 'var(--vl-muted)' }}>
+                {recommendationText.length}/1000
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <Button variant="primary" loading={submitting} onClick={handleSubmitApply}>
+                Trimite aplicația
+              </Button>
+              <Button variant="secondary" onClick={() => setApplyRole(null)}>
+                Anulează
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

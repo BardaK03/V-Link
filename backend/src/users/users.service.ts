@@ -1,13 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
+import { UserSkill } from '../user-skills/entities/user-skill.entity';
+import { Skill } from '../skills/entities/skill.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(UserSkill)
+    private readonly userSkillRepository: Repository<UserSkill>,
+    @InjectRepository(Skill)
+    private readonly skillRepository: Repository<Skill>,
   ) {}
 
   async findAll(): Promise<User[]> {
@@ -25,5 +31,44 @@ export class UsersService {
   async create(userData: Partial<User>): Promise<User> {
     const user = this.userRepository.create(userData);
     return this.userRepository.save(user);
+  }
+
+  async updateSocialLinks(
+    auth_id: string,
+    social_links: Record<string, string>,
+  ): Promise<User> {
+    const user = await this.findByAuthId(auth_id);
+    if (!user) throw new NotFoundException('User not found');
+    await this.userRepository.update(user.id, { social_links });
+    return { ...user, social_links };
+  }
+
+  async getSkills(auth_id: string): Promise<Skill[]> {
+    const user = await this.findByAuthId(auth_id);
+    if (!user) throw new NotFoundException('User not found');
+    const userSkills = await this.userSkillRepository.find({
+      where: { user_id: user.id },
+      relations: ['skill'],
+    });
+    return userSkills.map((us) => us.skill);
+  }
+
+  async addSkill(auth_id: string, skill_id: number): Promise<void> {
+    const user = await this.findByAuthId(auth_id);
+    if (!user) throw new NotFoundException('User not found');
+    const skill = await this.skillRepository.findOne({ where: { id: skill_id } });
+    if (!skill) throw new NotFoundException('Skill not found');
+    const exists = await this.userSkillRepository.findOne({
+      where: { user_id: user.id, skill_id },
+    });
+    if (!exists) {
+      await this.userSkillRepository.save({ user_id: user.id, skill_id });
+    }
+  }
+
+  async removeSkill(auth_id: string, skill_id: number): Promise<void> {
+    const user = await this.findByAuthId(auth_id);
+    if (!user) throw new NotFoundException('User not found');
+    await this.userSkillRepository.delete({ user_id: user.id, skill_id });
   }
 }

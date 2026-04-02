@@ -65,10 +65,16 @@ export function deleteEventRole(eventId: string, roleId: string) {
 
 // ── Applications ──────────────────────────────────────────────────────────────
 
-export function applyToRole(roleId: string) {
+export interface ApplyPayload {
+  role_id: string
+  motivation_text?: string
+  recommendation_text?: string
+}
+
+export function applyToRole(payload: ApplyPayload) {
   return request<Application>('/applications', {
     method: 'POST',
-    body: JSON.stringify({ role_id: roleId }),
+    body: JSON.stringify(payload),
   })
 }
 
@@ -80,6 +86,14 @@ export function getEventApplications(eventId: string) {
   return request<Application[]>(`/events/${eventId}/applications`)
 }
 
+export function getReceivedApplications() {
+  return request<Application[]>('/applications/received')
+}
+
+export function getApplication(id: string) {
+  return request<Application>(`/applications/${id}`)
+}
+
 export function updateApplicationStatus(
   applicationId: string,
   status: 'APPROVED' | 'REJECTED' | 'COMPLETED',
@@ -88,6 +102,44 @@ export function updateApplicationStatus(
     method: 'PATCH',
     body: JSON.stringify({ status }),
   })
+}
+
+// ── Users ─────────────────────────────────────────────────────────────────────
+
+export function getMe() {
+  return request<{ id: string; email: string; role: string; total_points: number; social_links: Record<string, string> }>('/users/me')
+}
+
+export function updateSocialLinks(social_links: Record<string, string>) {
+  return request<unknown>('/users/me/social-links', {
+    method: 'PATCH',
+    body: JSON.stringify({ social_links }),
+  })
+}
+
+export function getMySkills() {
+  return request<Array<{ id: number; name: string }>>('/users/me/skills')
+}
+
+export function addSkill(skill_id: number) {
+  return request<Array<{ id: number; name: string }>>('/users/me/skills', {
+    method: 'POST',
+    body: JSON.stringify({ skill_id }),
+  })
+}
+
+export function removeSkill(skillId: number) {
+  return request<Array<{ id: number; name: string }>>(`/users/me/skills/${skillId}`, {
+    method: 'DELETE',
+  })
+}
+
+export function markApplicationComplete(applicationId: string) {
+  return updateApplicationStatus(applicationId, 'COMPLETED')
+}
+
+export function getAllSkills() {
+  return request<Array<{ id: number; name: string }>>('/skills')
 }
 
 // ── Gamification ───────────────────────────────────────────────────────────────
@@ -138,9 +190,11 @@ export interface Application {
   user_id: string
   role_id: string
   role: EventRole & { event: Event }
-  user?: { id: string; email: string }
+  user?: { id: string; email: string; social_links?: Record<string, string> }
   status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'COMPLETED'
   match_score: number | null
+  motivation_text: string | null
+  recommendation_text: string | null
   created_at: string
 }
 

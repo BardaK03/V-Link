@@ -26,6 +26,20 @@ export class ApplicationsController {
     return this.applicationsService.findMyApplications(req.user.id);
   }
 
+  // Organizer sees ALL applications received across all their events
+  @Get('applications/received')
+  @UseGuards(RoleGuard)
+  @Roles(UserRole.ORGANIZER, UserRole.ADMIN)
+  getAllReceived(@Request() req: any) {
+    return this.applicationsService.findAllReceivedByOrganizer(req.user.id);
+  }
+
+  // Single application detail (organizer or the applicant themselves)
+  @Get('applications/:id')
+  getOne(@Param('id') id: string, @Request() req: any) {
+    return this.applicationsService.findOneById(id, req.user.id);
+  }
+
   // Organizer sees all applications for an event
   @Get('events/:eventId/applications')
   @UseGuards(RoleGuard)

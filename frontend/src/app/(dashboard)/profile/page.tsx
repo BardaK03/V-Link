@@ -1,0 +1,269 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { useAuth } from '@/context/AuthContext'
+import { Navbar } from '@/components/layout/Navbar'
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import {
+  getMySkills,
+  getAllSkills,
+  addSkill,
+  removeSkill,
+  updateSocialLinks,
+} from '@/lib/api'
+
+const ROLE_LABELS: Record<string, string> = {
+  VOLUNTEER: 'Voluntar',
+  ORGANIZER: 'Organizator',
+  ADMIN: 'Administrator',
+}
+
+const SOCIAL_FIELDS = [
+  { key: 'linkedin', label: 'LinkedIn', placeholder: 'https://linkedin.com/in/...' },
+  { key: 'github', label: 'GitHub', placeholder: 'https://github.com/...' },
+  { key: 'twitter', label: 'Twitter / X', placeholder: 'https://twitter.com/...' },
+  { key: 'website', label: 'Website personal', placeholder: 'https://...' },
+]
+
+export default function ProfilePage() {
+  const { user, dbUser, loading, refreshDbUser } = useAuth()
+  const router = useRouter()
+
+  const [mySkills, setMySkills] = useState<Array<{ id: number; name: string }>>([])
+  const [allSkills, setAllSkills] = useState<Array<{ id: number; name: string }>>([])
+  const [socialLinks, setSocialLinks] = useState<Record<string, string>>({})
+  const [savingLinks, setSavingLinks] = useState(false)
+  const [linksSaved, setLinksSaved] = useState(false)
+  const [skillLoading, setSkillLoading] = useState<number | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!loading && !user) { router.push('/login'); return }
+    if (user) {
+      Promise.all([getMySkills(), getAllSkills()])
+        .then(([mine, all]) => {
+          setMySkills(mine)
+          setAllSkills(all)
+        })
+        .catch((e) => setError(e.message))
+    }
+  }, [user, loading, router])
+
+  useEffect(() => {
+    if (dbUser?.social_links) setSocialLinks(dbUser.social_links)
+  }, [dbUser])
+
+  const handleSaveLinks = async () => {
+    setSavingLinks(true)
+    setError(null)
+    try {
+      await updateSocialLinks(socialLinks)
+      await refreshDbUser()
+      setLinksSaved(true)
+      setTimeout(() => setLinksSaved(false), 2500)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Eroare la salvare')
+    } finally {
+      setSavingLinks(false)
+    }
+  }
+
+  const handleAddSkill = async (skillId: number) => {
+    setSkillLoading(skillId)
+    setError(null)
+    try {
+      const updated = await addSkill(skillId)
+      setMySkills(updated)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Eroare')
+    } finally {
+      setSkillLoading(null)
+    }
+  }
+
+  const handleRemoveSkill = async (skillId: number) => {
+    setSkillLoading(skillId)
+    setError(null)
+    try {
+      const updated = await removeSkill(skillId)
+      setMySkills(updated)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Eroare')
+    } finally {
+      setSkillLoading(null)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--vl-bg)' }}>
+        <p style={{ color: 'var(--vl-muted)' }}>Se încarcă...</p>
+      </div>
+    )
+  }
+
+  if (!user) return null
+
+  const mySkillIds = new Set(mySkills.map((s) => s.id))
+  const availableSkills = allSkills.filter((s) => !mySkillIds.has(s.id))
+
+  return (
+    <>
+      <Navbar />
+      <main
+        className="max-w-2xl mx-auto px-4 py-8"
+        style={{ background: 'var(--vl-bg)', minHeight: '100vh' }}
+      >
+        <div className="mb-6">
+          <Link href="/dashboard" className="text-sm hover:underline" style={{ color: 'var(--vl-orange)' }}>
+            ← Dashboard
+          </Link>
+          <h1
+            className="text-2xl font-bold mt-2"
+            style={{ fontFamily: 'var(--vl-font-display)', color: 'var(--vl-dark)' }}
+          >
+            Profilul meu
+          </h1>
+        </div>
+
+        {error && (
+          <div className="mb-4 p-3 rounded-lg text-sm" style={{ background: 'var(--vl-error-bg)', color: 'var(--vl-error)' }}>
+            {error}
+          </div>
+        )}
+
+        {/* Info card */}
+        <section
+          className="rounded-xl border p-5 mb-6"
+          style={{ background: 'var(--vl-surface)', borderColor: 'var(--vl-border)' }}
+        >
+          <h2 className="font-semibold mb-3" style={{ color: 'var(--vl-dark)' }}>Informații cont</h2>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm" style={{ color: 'var(--vl-text)' }}>{user.email}</p>
+              {dbUser?.role && (
+                <span
+                  className="inline-block mt-1 text-xs font-semibold px-2.5 py-0.5 rounded-full"
+                  style={{ background: 'var(--vl-info-bg)', color: 'var(--vl-info)' }}
+                >
+                  {ROLE_LABELS[dbUser.role] ?? dbUser.role}
+                </span>
+              )}
+            </div>
+            {dbUser && (
+              <div className="text-right">
+                <p className="text-xs" style={{ color: 'var(--vl-muted)' }}>Puncte totale</p>
+                <p
+                  style={{
+                    fontFamily: 'var(--vl-font-display)',
+                    fontSize: '1.6rem',
+                    fontWeight: 700,
+                    color: 'var(--vl-orange)',
+                    lineHeight: 1,
+                  }}
+                >
+                  {dbUser.total_points}
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Social links */}
+        <section
+          className="rounded-xl border p-5 mb-6"
+          style={{ background: 'var(--vl-surface)', borderColor: 'var(--vl-border)' }}
+        >
+          <h2 className="font-semibold mb-4" style={{ color: 'var(--vl-dark)' }}>Link-uri sociale</h2>
+          <div className="flex flex-col gap-3">
+            {SOCIAL_FIELDS.map(({ key, label, placeholder }) => (
+              <Input
+                key={key}
+                label={label}
+                placeholder={placeholder}
+                value={socialLinks[key] ?? ''}
+                onChange={(e) => setSocialLinks({ ...socialLinks, [key]: e.target.value })}
+              />
+            ))}
+          </div>
+          <div className="mt-4 flex items-center gap-3">
+            <Button variant="primary" loading={savingLinks} onClick={handleSaveLinks}>
+              Salvează link-uri
+            </Button>
+            {linksSaved && (
+              <span className="text-sm" style={{ color: 'var(--vl-success)' }}>Salvat!</span>
+            )}
+          </div>
+        </section>
+
+        {/* Skills */}
+        <section
+          className="rounded-xl border p-5"
+          style={{ background: 'var(--vl-surface)', borderColor: 'var(--vl-border)' }}
+        >
+          <h2 className="font-semibold mb-4" style={{ color: 'var(--vl-dark)' }}>Skill-urile mele</h2>
+
+          {mySkills.length > 0 ? (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {mySkills.map((skill) => (
+                <span
+                  key={skill.id}
+                  className="inline-flex items-center gap-1.5 text-sm px-3 py-1 rounded-full"
+                  style={{ background: 'var(--vl-orange-light)', color: 'var(--vl-orange-hover)', border: '1px solid rgba(232,82,10,0.2)' }}
+                >
+                  {skill.name}
+                  <button
+                    onClick={() => handleRemoveSkill(skill.id)}
+                    disabled={skillLoading === skill.id}
+                    style={{ cursor: 'pointer', fontWeight: 700, lineHeight: 1, color: 'inherit', background: 'none', border: 'none', padding: 0 }}
+                  >
+                    {skillLoading === skill.id ? '…' : '×'}
+                  </button>
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm mb-4" style={{ color: 'var(--vl-muted)' }}>
+              Nu ai adăugat încă niciun skill.
+            </p>
+          )}
+
+          {availableSkills.length > 0 && (
+            <>
+              <p className="text-xs font-medium mb-2" style={{ color: 'var(--vl-muted)' }}>
+                Adaugă skill-uri:
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {availableSkills.map((skill) => (
+                  <button
+                    key={skill.id}
+                    onClick={() => handleAddSkill(skill.id)}
+                    disabled={skillLoading === skill.id}
+                    className="text-sm px-3 py-1 rounded-full transition-colors"
+                    style={{
+                      background: 'var(--vl-surface-raised)',
+                      color: 'var(--vl-text)',
+                      border: '1px solid var(--vl-border)',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {skillLoading === skill.id ? '…' : `+ ${skill.name}`}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
+          {allSkills.length === 0 && (
+            <p className="text-sm" style={{ color: 'var(--vl-muted)' }}>
+              Nu există skill-uri configurate în sistem.
+            </p>
+          )}
+        </section>
+      </main>
+    </>
+  )
+}

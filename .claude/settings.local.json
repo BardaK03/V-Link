@@ -5,7 +5,16 @@
       "Bash(npm install:*)",
       "Bash(npm run:*)",
       "Bash(ls /c/Users/barda/Desktop/V-Link/frontend/src/app/\\\\\\(auth\\\\\\)/)",
-      "Bash(ls /c/Users/barda/Desktop/V-Link/frontend/src/app/\\\\\\(dashboard\\\\\\)/)"
+      "Bash(ls /c/Users/barda/Desktop/V-Link/frontend/src/app/\\\\\\(dashboard\\\\\\)/)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(cat C:/Users/barda/Desktop/V-Link/frontend/src/app/\\\\\\(dashboard\\\\\\)/events/[id]/page.tsx)",
+      "Bash(cat C:/Users/barda/Desktop/V-Link/frontend/src/app/\\\\\\(dashboard\\\\\\)/events/[id]/applications/page.tsx)",
+      "Bash(xargs grep:*)",
+      "Bash(cat C:/Users/barda/Desktop/V-Link/frontend/src/app/\\\\\\(dashboard\\\\\\)/layout.tsx)",
+      "Bash(cat C:/Users/barda/Desktop/V-Link/frontend/src/app/\\\\\\(auth\\\\\\)/layout.tsx)",
+      "Bash(grep -n \"COMPLETED\\\\|points_reward\\\\|slots_needed\\\\|hours_required\\\\|points\" C:/Users/barda/Desktop/V-Link/frontend/src/app/\\\\\\(dashboard\\\\\\)/events/[id]/page.tsx)",
+      "Bash(grep:*)"
     ]
   }
 }

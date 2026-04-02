@@ -1,6 +1,10 @@
+'use client'
+
 import Link from 'next/link'
+import { useAuth } from '@/context/AuthContext'
 
 export default function HomePage() {
+  const { user, loading } = useAuth()
   return (
     <main
       style={{
@@ -52,6 +56,23 @@ export default function HomePage() {
           V-Link
         </span>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          {!loading && user ? (
+            <Link
+              href="/dashboard"
+              style={{
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                background: 'var(--vl-orange)',
+                color: '#fff',
+                padding: '7px 16px',
+                borderRadius: 8,
+                textDecoration: 'none',
+              }}
+            >
+              Dashboard →
+            </Link>
+          ) : (
+          <>
           <Link href="/login" style={{ fontSize: '0.875rem', color: 'var(--vl-muted)', fontWeight: 500 }}>
             Autentificare
           </Link>
@@ -70,6 +91,8 @@ export default function HomePage() {
           >
             Înregistrare
           </Link>
+          </>
+          )}
         </div>
       </nav>
 
@@ -161,38 +184,58 @@ export default function HomePage() {
           </p>
 
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link
-              href="/register"
-              style={{
-                background: 'var(--vl-orange)',
-                color: '#fff',
-                padding: '12px 28px',
-                borderRadius: 10,
-                fontWeight: 600,
-                fontSize: '0.95rem',
-                textDecoration: 'none',
-                boxShadow: '0 4px 12px rgba(232,82,10,0.30)',
-                transition: 'all 150ms',
-              }}
-            >
-              Începe acum
-            </Link>
-            <Link
-              href="/login"
-              style={{
-                background: 'var(--vl-surface)',
-                color: 'var(--vl-text)',
-                padding: '12px 28px',
-                borderRadius: 10,
-                fontWeight: 500,
-                fontSize: '0.95rem',
-                textDecoration: 'none',
-                border: '1px solid var(--vl-border)',
-                transition: 'all 150ms',
-              }}
-            >
-              Autentificare
-            </Link>
+            {!loading && user ? (
+              <Link
+                href="/dashboard"
+                style={{
+                  background: 'var(--vl-orange)',
+                  color: '#fff',
+                  padding: '12px 28px',
+                  borderRadius: 10,
+                  fontWeight: 600,
+                  fontSize: '0.95rem',
+                  textDecoration: 'none',
+                  boxShadow: '0 4px 12px rgba(232,82,10,0.30)',
+                }}
+              >
+                Mergi la Dashboard →
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/register"
+                  style={{
+                    background: 'var(--vl-orange)',
+                    color: '#fff',
+                    padding: '12px 28px',
+                    borderRadius: 10,
+                    fontWeight: 600,
+                    fontSize: '0.95rem',
+                    textDecoration: 'none',
+                    boxShadow: '0 4px 12px rgba(232,82,10,0.30)',
+                    transition: 'all 150ms',
+                  }}
+                >
+                  Începe acum
+                </Link>
+                <Link
+                  href="/login"
+                  style={{
+                    background: 'var(--vl-surface)',
+                    color: 'var(--vl-text)',
+                    padding: '12px 28px',
+                    borderRadius: 10,
+                    fontWeight: 500,
+                    fontSize: '0.95rem',
+                    textDecoration: 'none',
+                    border: '1px solid var(--vl-border)',
+                    transition: 'all 150ms',
+                  }}
+                >
+                  Autentificare
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </section>
