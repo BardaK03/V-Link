@@ -280,7 +280,7 @@ export default function EditEventPage() {
                             key={skillId}
                             className="px-2 py-0.5 text-xs rounded-full"
                             style={{
-                              background: '#FEF0E8',
+                              background: 'var(--vl-orange-light)',
                               color: 'var(--vl-orange)',
                               border: '1px solid var(--vl-orange)',
                             }}
@@ -401,7 +401,7 @@ export default function EditEventPage() {
                         onClick={() => toggleSkill(skill.id)}
                         className="px-2 py-1 text-xs rounded-full cursor-pointer"
                         style={{
-                          background: selected ? '#FEF0E8' : 'var(--vl-bg)',
+                          background: selected ? 'var(--vl-orange-light)' : 'var(--vl-bg)',
                           color: selected ? 'var(--vl-orange)' : 'var(--vl-muted)',
                           border: selected
                             ? '1px solid var(--vl-orange)'

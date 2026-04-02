@@ -280,7 +280,7 @@ export default function CreateEventPage() {
                               onClick={() => toggleRoleSkill(i, skill.id)}
                               className="px-2 py-1 text-xs rounded-full cursor-pointer"
                               style={{
-                                background: selected ? '#FEF0E8' : 'var(--vl-bg)',
+                                background: selected ? 'var(--vl-orange-light)' : 'var(--vl-bg)',
                                 color: selected ? 'var(--vl-orange)' : 'var(--vl-muted)',
                                 border: selected
                                   ? '1px solid var(--vl-orange)'
