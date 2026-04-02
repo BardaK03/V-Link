@@ -10,6 +10,7 @@ import {
   getEvent,
   applyToRole,
   deleteEvent,
+  getAllSkills,
   type Event,
   type EventRole,
 } from '@/lib/api'
@@ -24,6 +25,7 @@ export default function EventDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [appliedRoles, setAppliedRoles] = useState<Set<string>>(new Set())
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
+  const [allSkills, setAllSkills] = useState<Array<{ id: number; name: string }>>([])
 
   // Modal state
   const [applyRole, setApplyRole] = useState<EventRole | null>(null)
@@ -34,8 +36,11 @@ export default function EventDetailPage() {
   useEffect(() => {
     if (!loading && !user) { router.push('/login'); return }
     if (user && id) {
-      getEvent(id)
-        .then(setEvent)
+      Promise.all([getEvent(id), getAllSkills()])
+        .then(([evt, skills]) => {
+          setEvent(evt)
+          setAllSkills(skills)
+        })
         .catch((e) => setError(e.message))
         .finally(() => setFetching(false))
     }
@@ -53,6 +58,8 @@ export default function EventDetailPage() {
 
   const isOwner = event.organizer?.id === user.id || event.organizer_id === user.id
   const isVolunteer = !isOwner && dbUser?.role !== 'ADMIN'
+
+  const getSkillName = (id: number) => allSkills.find(s => s.id === id)?.name ?? `Skill ${id}`
 
   const openApplyModal = (role: EventRole) => {
     setApplyRole(role)
@@ -187,6 +194,26 @@ export default function EventDetailPage() {
                         🏆 {role.points_reward} puncte
                       </span>
                     </div>
+                    {role.required_skills && role.required_skills.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {role.required_skills.map((skillId) => (
+                          <span
+                            key={skillId}
+                            style={{
+                              background: 'var(--vl-orange-light)',
+                              color: 'var(--vl-orange)',
+                              border: '1px solid var(--vl-orange)',
+                              borderRadius: 'var(--vl-radius)',
+                              fontSize: '0.7rem',
+                              padding: '2px 8px',
+                              fontWeight: 500,
+                            }}
+                          >
+                            {getSkillName(skillId)}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   {isVolunteer && (
                     <Button
