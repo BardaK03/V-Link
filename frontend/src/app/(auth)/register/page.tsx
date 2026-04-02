@@ -12,6 +12,7 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [isOrganizer, setIsOrganizer] = useState(false)
   const [loading, setLoading] = useState(false)
   const { signUp } = useAuth()
 
@@ -36,6 +37,17 @@ export default function RegisterPage() {
       setError(error)
     } else {
       setSuccess(true)
+      if (isOrganizer) {
+        try {
+          await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/auth/request-organizer`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userEmail: email }),
+          })
+        } catch {
+          // registration still succeeded — ignore email notification failure
+        }
+      }
     }
 
     setLoading(false)
@@ -50,6 +62,11 @@ export default function RegisterPage() {
           <p className="text-sm" style={{ color: 'var(--vl-text)' }}>
             Am trimis un link de confirmare la <strong>{email}</strong>. Confirmă contul pentru a te autentifica.
           </p>
+          {isOrganizer && (
+            <p className="text-sm mt-3" style={{ color: 'var(--vl-muted)' }}>
+              Cererea ta de cont Organizator a fost trimisă. Vei fi contactat după verificare.
+            </p>
+          )}
           <Link href="/login" className="mt-6 inline-block text-sm hover:underline" style={{ color: 'var(--vl-orange)' }}>
             Înapoi la autentificare
           </Link>
@@ -95,6 +112,20 @@ export default function RegisterPage() {
             placeholder="••••••••"
             required
           />
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={isOrganizer}
+              onChange={(e) => setIsOrganizer(e.target.checked)}
+              style={{ width: '16px', height: '16px', accentColor: 'var(--vl-orange)' }}
+            />
+            <span style={{ fontSize: '0.875rem', color: 'var(--vl-text)' }}>
+              Sunt organizator{' '}
+              <span style={{ color: 'var(--vl-muted)', fontWeight: 400, fontSize: '0.8rem' }}>
+                (contul va fi activat de administrator)
+              </span>
+            </span>
+          </label>
           <Button type="submit" loading={loading} className="mt-2 w-full">
             Înregistrare
           </Button>
