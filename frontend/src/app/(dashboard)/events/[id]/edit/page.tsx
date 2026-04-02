@@ -7,7 +7,15 @@ import { useAuth } from '@/context/AuthContext'
 import { Navbar } from '@/components/layout/Navbar'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { getEvent, updateEvent, type Event } from '@/lib/api'
+import {
+  getEvent,
+  updateEvent,
+  addEventRole,
+  deleteEventRole,
+  type Event,
+  type EventRole,
+  type EventRolePayload,
+} from '@/lib/api'
 
 function toLocalDatetime(iso: string): string {
   const d = new Date(iso)
@@ -19,6 +27,14 @@ const inputStyle = {
   border: '1px solid var(--vl-border)',
   borderRadius: 'var(--vl-radius)',
   color: 'var(--vl-text)',
+}
+
+const EMPTY_ROLE_FORM: EventRolePayload = {
+  role_name: '',
+  description: '',
+  slots_needed: 1,
+  hours_required: 1,
+  points_reward: 0,
 }
 
 export default function EditEventPage() {
@@ -36,6 +52,12 @@ export default function EditEventPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Role management state
+  const [roles, setRoles] = useState<EventRole[]>([])
+  const [roleForm, setRoleForm] = useState<EventRolePayload>(EMPTY_ROLE_FORM)
+  const [addingRole, setAddingRole] = useState(false)
+  const [roleError, setRoleError] = useState<string | null>(null)
+
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login')
@@ -50,8 +72,9 @@ export default function EditEventPage() {
           setAddress(e.address)
           setStartDate(toLocalDatetime(e.start_date))
           setEndDate(toLocalDatetime(e.end_date))
+          setRoles(e.roles ?? [])
         })
-        .catch((e) => setError(e.message))
+        .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Eroare la încărcare'))
         .finally(() => setFetching(false))
     }
   }, [user, loading, id, router])
@@ -83,6 +106,45 @@ export default function EditEventPage() {
       setError(e instanceof Error ? e.message : 'Eroare la actualizare')
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const handleDeleteRole = async (roleId: string) => {
+    // Optimistic update
+    const previous = roles
+    setRoles((prev) => prev.filter((r) => r.id !== roleId))
+    try {
+      await deleteEventRole(id, roleId)
+    } catch (e: unknown) {
+      // Revert on failure
+      setRoles(previous)
+      setRoleError(e instanceof Error ? e.message : 'Eroare la ștergere')
+    }
+  }
+
+  const handleAddRole = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setRoleError(null)
+    if (!roleForm.role_name.trim()) {
+      setRoleError('Numele rolului este obligatoriu')
+      return
+    }
+    setAddingRole(true)
+    try {
+      const payload: EventRolePayload = {
+        role_name: roleForm.role_name.trim(),
+        description: roleForm.description?.trim() || undefined,
+        slots_needed: roleForm.slots_needed,
+        hours_required: roleForm.hours_required,
+        points_reward: roleForm.points_reward,
+      }
+      const newRole = await addEventRole(id, payload)
+      setRoles((prev) => [...prev, newRole])
+      setRoleForm(EMPTY_ROLE_FORM)
+    } catch (e: unknown) {
+      setRoleError(e instanceof Error ? e.message : 'Eroare la adăugare rol')
+    } finally {
+      setAddingRole(false)
     }
   }
 
@@ -154,6 +216,135 @@ export default function EditEventPage() {
             {submitting ? 'Se salvează...' : 'Salvează modificările'}
           </Button>
         </form>
+
+        {/* Role management section */}
+        <section className="mt-8">
+          <h2 className="text-xl font-bold mb-4" style={{ color: 'var(--vl-dark)', fontFamily: 'var(--vl-font-display)' }}>Roluri</h2>
+
+          {/* Existing roles list */}
+          {roles.length > 0 && (
+            <div className="space-y-3 mb-6">
+              {roles.map((role) => (
+                <div
+                  key={role.id}
+                  className="flex items-start justify-between gap-4 p-4"
+                  style={{
+                    background: 'var(--vl-surface)',
+                    border: '1px solid var(--vl-border)',
+                    borderRadius: 'var(--vl-radius)',
+                  }}
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold" style={{ color: 'var(--vl-dark)' }}>{role.role_name}</p>
+                    {role.description && (
+                      <p className="text-sm mt-0.5" style={{ color: 'var(--vl-muted)' }}>{role.description}</p>
+                    )}
+                    <div className="flex flex-wrap gap-3 mt-1.5 text-xs" style={{ color: 'var(--vl-muted)' }}>
+                      <span>{role.slots_needed} locuri</span>
+                      <span>{role.hours_required}h necesare</span>
+                      <span>{role.points_reward} puncte</span>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="danger"
+                    size="sm"
+                    onClick={() => handleDeleteRole(role.id)}
+                  >
+                    Șterge
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {roles.length === 0 && (
+            <p className="text-sm mb-4" style={{ color: 'var(--vl-muted)' }}>Niciun rol adăugat încă.</p>
+          )}
+
+          {/* Add role form */}
+          <form
+            onSubmit={handleAddRole}
+            className="space-y-4 p-4"
+            style={{
+              background: 'var(--vl-surface)',
+              border: '1px solid var(--vl-border)',
+              borderRadius: 'var(--vl-radius-lg)',
+            }}
+          >
+            <h3 className="text-sm font-semibold" style={{ color: 'var(--vl-dark)' }}>Adaugă rol nou</h3>
+
+            {roleError && (
+              <div className="p-2 rounded text-sm" style={{ backgroundColor: 'var(--vl-error-bg)', color: 'var(--vl-error)' }}>
+                {roleError}
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--vl-text)' }}>Nume rol *</label>
+              <input
+                type="text"
+                value={roleForm.role_name}
+                onChange={(e) => setRoleForm((prev) => ({ ...prev, role_name: e.target.value }))}
+                placeholder="ex. Coordonator logistică"
+                className="w-full px-3 py-2 text-sm focus:outline-none"
+                style={inputStyle}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--vl-text)' }}>Descriere</label>
+              <textarea
+                value={roleForm.description ?? ''}
+                onChange={(e) => setRoleForm((prev) => ({ ...prev, description: e.target.value }))}
+                rows={2}
+                placeholder="Opțional"
+                className="w-full px-3 py-2 text-sm focus:outline-none"
+                style={inputStyle}
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--vl-text)' }}>Locuri *</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={roleForm.slots_needed}
+                  onChange={(e) => setRoleForm((prev) => ({ ...prev, slots_needed: Math.max(1, Number(e.target.value)) }))}
+                  className="w-full px-3 py-2 text-sm focus:outline-none"
+                  style={inputStyle}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--vl-text)' }}>Ore *</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={roleForm.hours_required}
+                  onChange={(e) => setRoleForm((prev) => ({ ...prev, hours_required: Math.max(0, Number(e.target.value)) }))}
+                  className="w-full px-3 py-2 text-sm focus:outline-none"
+                  style={inputStyle}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--vl-text)' }}>Puncte</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={roleForm.points_reward}
+                  onChange={(e) => setRoleForm((prev) => ({ ...prev, points_reward: Math.max(0, Number(e.target.value)) }))}
+                  className="w-full px-3 py-2 text-sm focus:outline-none"
+                  style={inputStyle}
+                />
+              </div>
+            </div>
+
+            <Button type="submit" disabled={addingRole}>
+              {addingRole ? 'Se adaugă...' : '+ Adaugă rol'}
+            </Button>
+          </form>
+        </section>
       </main>
     </>
   )
