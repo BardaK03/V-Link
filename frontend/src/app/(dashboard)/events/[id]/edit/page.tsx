@@ -12,6 +12,7 @@ import {
   updateEvent,
   addEventRole,
   deleteEventRole,
+  getAllSkills,
   type Event,
   type EventRole,
   type EventRolePayload,
@@ -29,12 +30,17 @@ const inputStyle = {
   color: 'var(--vl-text)',
 }
 
-const EMPTY_ROLE_FORM: EventRolePayload = {
+interface RoleFormState extends EventRolePayload {
+  required_skills: number[]
+}
+
+const EMPTY_ROLE_FORM: RoleFormState = {
   role_name: '',
   description: '',
   slots_needed: 1,
   hours_required: 1,
   points_reward: 0,
+  required_skills: [],
 }
 
 export default function EditEventPage() {
@@ -54,9 +60,10 @@ export default function EditEventPage() {
 
   // Role management state
   const [roles, setRoles] = useState<EventRole[]>([])
-  const [roleForm, setRoleForm] = useState<EventRolePayload>(EMPTY_ROLE_FORM)
+  const [roleForm, setRoleForm] = useState<RoleFormState>(EMPTY_ROLE_FORM)
   const [addingRole, setAddingRole] = useState(false)
   const [roleError, setRoleError] = useState<string | null>(null)
+  const [allSkills, setAllSkills] = useState<Array<{ id: number; name: string }>>([])
 
   useEffect(() => {
     if (!loading && !user) {
@@ -64,8 +71,11 @@ export default function EditEventPage() {
       return
     }
     if (user && id) {
-      getEvent(id)
-        .then((e) => {
+      Promise.all([
+        getEvent(id),
+        getAllSkills().catch(() => [] as Array<{ id: number; name: string }>),
+      ])
+        .then(([e, skills]) => {
           setEvent(e)
           setTitle(e.title)
           setDescription(e.description ?? '')
@@ -73,6 +83,7 @@ export default function EditEventPage() {
           setStartDate(toLocalDatetime(e.start_date))
           setEndDate(toLocalDatetime(e.end_date))
           setRoles(e.roles ?? [])
+          setAllSkills(skills)
         })
         .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Eroare la încărcare'))
         .finally(() => setFetching(false))
@@ -122,6 +133,18 @@ export default function EditEventPage() {
     }
   }
 
+  const toggleSkill = (skillId: number) => {
+    setRoleForm((prev) => {
+      const hasSkill = prev.required_skills.includes(skillId)
+      return {
+        ...prev,
+        required_skills: hasSkill
+          ? prev.required_skills.filter((id) => id !== skillId)
+          : [...prev.required_skills, skillId],
+      }
+    })
+  }
+
   const handleAddRole = async (e: React.FormEvent) => {
     e.preventDefault()
     setRoleError(null)
@@ -137,6 +160,7 @@ export default function EditEventPage() {
         slots_needed: roleForm.slots_needed,
         hours_required: roleForm.hours_required,
         points_reward: roleForm.points_reward,
+        required_skills: roleForm.required_skills,
       }
       const newRole = await addEventRole(id, payload)
       setRoles((prev) => [...prev, newRole])
@@ -146,6 +170,11 @@ export default function EditEventPage() {
     } finally {
       setAddingRole(false)
     }
+  }
+
+  const getSkillName = (skillId: number): string => {
+    const skill = allSkills.find((s) => s.id === skillId)
+    return skill ? skill.name : String(skillId)
   }
 
   return (
@@ -244,6 +273,23 @@ export default function EditEventPage() {
                       <span>{role.hours_required}h necesare</span>
                       <span>{role.points_reward} puncte</span>
                     </div>
+                    {role.required_skills && role.required_skills.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {role.required_skills.map((skillId) => (
+                          <span
+                            key={skillId}
+                            className="px-2 py-0.5 text-xs rounded-full"
+                            style={{
+                              background: '#FEF0E8',
+                              color: 'var(--vl-orange)',
+                              border: '1px solid var(--vl-orange)',
+                            }}
+                          >
+                            {getSkillName(skillId)}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <Button
                     type="button"
@@ -339,6 +385,36 @@ export default function EditEventPage() {
                 />
               </div>
             </div>
+
+            {allSkills.length > 0 && (
+              <div>
+                <label className="block mb-1.5" style={{ color: 'var(--vl-text)', fontSize: '0.75rem' }}>
+                  Skill-uri necesare
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {allSkills.map((skill) => {
+                    const selected = roleForm.required_skills.includes(skill.id)
+                    return (
+                      <button
+                        key={skill.id}
+                        type="button"
+                        onClick={() => toggleSkill(skill.id)}
+                        className="px-2 py-1 text-xs rounded-full cursor-pointer"
+                        style={{
+                          background: selected ? '#FEF0E8' : 'var(--vl-bg)',
+                          color: selected ? 'var(--vl-orange)' : 'var(--vl-muted)',
+                          border: selected
+                            ? '1px solid var(--vl-orange)'
+                            : '1px solid var(--vl-border)',
+                        }}
+                      >
+                        {skill.name}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
 
             <Button type="submit" disabled={addingRole}>
               {addingRole ? 'Se adaugă...' : '+ Adaugă rol'}

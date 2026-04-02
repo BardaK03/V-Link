@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/context/AuthContext'
 import { Navbar } from '@/components/layout/Navbar'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { createEvent, type EventRolePayload } from '@/lib/api'
+import { createEvent, getAllSkills, type EventRolePayload } from '@/lib/api'
 
 interface RoleForm {
   role_name: string
@@ -15,6 +15,7 @@ interface RoleForm {
   slots_needed: string
   hours_required: string
   points_reward: string
+  required_skills: number[]
 }
 
 const inputStyle = {
@@ -33,10 +34,19 @@ export default function CreateEventPage() {
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [roles, setRoles] = useState<RoleForm[]>([
-    { role_name: '', description: '', slots_needed: '1', hours_required: '1', points_reward: '0' },
+    { role_name: '', description: '', slots_needed: '1', hours_required: '1', points_reward: '0', required_skills: [] },
   ])
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [allSkills, setAllSkills] = useState<Array<{ id: number; name: string }>>([])
+
+  useEffect(() => {
+    getAllSkills()
+      .then(setAllSkills)
+      .catch(() => {
+        // Skills list is non-critical; silently fail
+      })
+  }, [])
 
   if (loading) {
     return (
@@ -54,15 +64,29 @@ export default function CreateEventPage() {
   const addRole = () =>
     setRoles((prev) => [
       ...prev,
-      { role_name: '', description: '', slots_needed: '1', hours_required: '1', points_reward: '0' },
+      { role_name: '', description: '', slots_needed: '1', hours_required: '1', points_reward: '0', required_skills: [] },
     ])
 
   const removeRole = (index: number) =>
     setRoles((prev) => prev.filter((_, i) => i !== index))
 
-  const updateRole = (index: number, field: keyof RoleForm, value: string) =>
+  const updateRole = (index: number, field: keyof Omit<RoleForm, 'required_skills'>, value: string) =>
     setRoles((prev) =>
       prev.map((r, i) => (i === index ? { ...r, [field]: value } : r)),
+    )
+
+  const toggleRoleSkill = (roleIndex: number, skillId: number) =>
+    setRoles((prev) =>
+      prev.map((r, i) => {
+        if (i !== roleIndex) return r
+        const hasSkill = r.required_skills.includes(skillId)
+        return {
+          ...r,
+          required_skills: hasSkill
+            ? r.required_skills.filter((id) => id !== skillId)
+            : [...r.required_skills, skillId],
+        }
+      }),
     )
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -78,6 +102,7 @@ export default function CreateEventPage() {
         slots_needed: Math.max(1, parseInt(r.slots_needed, 10) || 1),
         hours_required: Math.max(0, parseInt(r.hours_required, 10) || 0),
         points_reward: Math.max(0, parseInt(r.points_reward, 10) || 0),
+        required_skills: r.required_skills,
       }))
 
     try {
@@ -240,6 +265,35 @@ export default function CreateEventPage() {
                       />
                     </div>
                   </div>
+                  {allSkills.length > 0 && (
+                    <div>
+                      <label className="block mb-1.5" style={{ color: 'var(--vl-text)', fontSize: '0.75rem' }}>
+                        Skill-uri necesare
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {allSkills.map((skill) => {
+                          const selected = role.required_skills.includes(skill.id)
+                          return (
+                            <button
+                              key={skill.id}
+                              type="button"
+                              onClick={() => toggleRoleSkill(i, skill.id)}
+                              className="px-2 py-1 text-xs rounded-full cursor-pointer"
+                              style={{
+                                background: selected ? '#FEF0E8' : 'var(--vl-bg)',
+                                color: selected ? 'var(--vl-orange)' : 'var(--vl-muted)',
+                                border: selected
+                                  ? '1px solid var(--vl-orange)'
+                                  : '1px solid var(--vl-border)',
+                              }}
+                            >
+                              {skill.name}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
