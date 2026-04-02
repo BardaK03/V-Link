@@ -14,6 +14,7 @@ import {
   removeSkill,
   updateSocialLinks,
 } from '@/lib/api'
+import { subscribeToPush, unsubscribeFromPush } from '@/lib/push'
 
 const ROLE_LABELS: Record<string, string> = {
   VOLUNTEER: 'Voluntar',
@@ -39,6 +40,10 @@ export default function ProfilePage() {
   const [linksSaved, setLinksSaved] = useState(false)
   const [skillLoading, setSkillLoading] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [notifSupported, setNotifSupported] = useState(true)
+  const [subscribed, setSubscribed] = useState(false)
+  const [notifLoading, setNotifLoading] = useState(false)
+  const [notifError, setNotifError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!loading && !user) { router.push('/login'); return }
@@ -55,6 +60,27 @@ export default function ProfilePage() {
   useEffect(() => {
     if (dbUser?.social_links) setSocialLinks(dbUser.social_links)
   }, [dbUser])
+
+  useEffect(() => {
+    async function checkSubscription() {
+      if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+        setNotifSupported(false)
+        return
+      }
+      try {
+        const reg = await navigator.serviceWorker.getRegistration('/sw.js')
+        if (!reg) {
+          setSubscribed(false)
+          return
+        }
+        const sub = await reg.pushManager.getSubscription()
+        setSubscribed(!!sub)
+      } catch {
+        setNotifSupported(false)
+      }
+    }
+    checkSubscription()
+  }, [])
 
   const handleSaveLinks = async () => {
     setSavingLinks(true)
@@ -95,6 +121,27 @@ export default function ProfilePage() {
     } finally {
       setSkillLoading(null)
     }
+  }
+
+  const handleSubscribe = async () => {
+    setNotifLoading(true)
+    setNotifError(null)
+    const ok = await subscribeToPush()
+    if (ok) setSubscribed(true)
+    else setNotifError('Nu s-au putut activa notificările. Verifică permisiunile browserului.')
+    setNotifLoading(false)
+  }
+
+  const handleUnsubscribe = async () => {
+    setNotifLoading(true)
+    setNotifError(null)
+    try {
+      await unsubscribeFromPush()
+      setSubscribed(false)
+    } catch {
+      setNotifError('Eroare la dezactivarea notificărilor.')
+    }
+    setNotifLoading(false)
   }
 
   if (loading) {
@@ -263,6 +310,49 @@ export default function ProfilePage() {
             </p>
           )}
         </section>
+
+        {/* Push Notifications */}
+        {notifSupported && (
+          <section
+            className="rounded-xl border p-5 mt-6"
+            style={{ background: 'var(--vl-surface)', borderColor: 'var(--vl-border)' }}
+          >
+            <h2
+              className="font-semibold mb-2"
+              style={{ fontFamily: 'var(--vl-font-display)', color: 'var(--vl-dark)' }}
+            >
+              Notificări Push
+            </h2>
+            <p style={{ color: 'var(--vl-muted)', fontSize: '0.875rem', marginBottom: '1rem' }}>
+              {subscribed
+                ? 'Notificările push sunt active pe acest dispozitiv.'
+                : 'Activează notificările pentru a primi actualizări despre aplicații.'}
+            </p>
+            {notifError && (
+              <div
+                style={{
+                  background: 'var(--vl-error-bg)',
+                  color: 'var(--vl-error)',
+                  borderRadius: 'var(--vl-radius)',
+                  padding: '0.75rem',
+                  marginBottom: '0.75rem',
+                  fontSize: '0.875rem',
+                }}
+              >
+                {notifError}
+              </div>
+            )}
+            {subscribed ? (
+              <Button variant="secondary" size="sm" loading={notifLoading} onClick={handleUnsubscribe}>
+                Dezactivează notificările
+              </Button>
+            ) : (
+              <Button variant="primary" size="sm" loading={notifLoading} onClick={handleSubscribe}>
+                Activează notificările
+              </Button>
+            )}
+          </section>
+        )}
       </main>
     </>
   )
