@@ -34,6 +34,11 @@ export class EventsController {
     return this.eventsService.findAll();
   }
 
+  @Get('by-organizer/:organizerId')
+  findByOrganizer(@Param('organizerId') organizerId: string) {
+    return this.eventsService.findByOrganizer(organizerId);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.eventsService.findOne(id);

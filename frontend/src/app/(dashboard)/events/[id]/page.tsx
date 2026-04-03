@@ -11,6 +11,7 @@ import {
   applyToRole,
   deleteEvent,
   getAllSkills,
+  getMyEventApplications,
   type Event,
   type EventRole,
 } from '@/lib/api'
@@ -36,10 +37,16 @@ export default function EventDetailPage() {
   useEffect(() => {
     if (!loading && !user) { router.push('/login'); return }
     if (user && id) {
-      Promise.all([getEvent(id), getAllSkills()])
-        .then(([evt, skills]) => {
+      Promise.all([
+        getEvent(id),
+        getAllSkills(),
+        getMyEventApplications(id).catch(() => [] as Array<{ id: string; role_id: string; status: string; created_at: string }>),
+      ])
+        .then(([evt, skills, myApps]) => {
           setEvent(evt)
           setAllSkills(skills)
+          const appliedIds = new Set(myApps.map((a) => a.role_id))
+          setAppliedRoles(appliedIds)
         })
         .catch((e) => setError(e.message))
         .finally(() => setFetching(false))
@@ -159,7 +166,9 @@ export default function EventDetailPage() {
             </div>
             <div>
               <span style={{ color: 'var(--vl-dark)', fontWeight: 500 }}>Organizator:</span>{' '}
-              {event.organizer?.email}
+              <Link href={`/organizations/${event.organizer?.id}`} style={{ color: 'var(--vl-orange)', textDecoration: 'underline' }}>
+                {event.organizer?.company_name || event.organizer?.display_name || event.organizer?.email}
+              </Link>
             </div>
           </div>
         </div>

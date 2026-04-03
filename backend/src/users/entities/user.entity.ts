@@ -26,6 +26,15 @@ export class User {
   @Column({ type: 'int', default: 0 })
   total_points: number;
 
+  @Column({ nullable: true, type: 'text' })
+  display_name: string | null;
+
+  @Column({ nullable: true, type: 'text' })
+  company_name: string | null;
+
+  @Column({ nullable: true, type: 'text' })
+  avatar_url: string | null;
+
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date;
 }

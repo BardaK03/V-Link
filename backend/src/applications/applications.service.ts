@@ -78,6 +78,19 @@ export class ApplicationsService {
     });
   }
 
+  async findMyApplicationsForEvent(authId: string, eventId: string): Promise<Application[]> {
+    const user = await this.usersService.findByAuthId(authId);
+    if (!user) throw new NotFoundException('User not found');
+
+    return this.appRepo
+      .createQueryBuilder('app')
+      .innerJoin('app.role', 'role')
+      .where('app.user_id = :userId', { userId: user.id })
+      .andWhere('role.event_id = :eventId', { eventId })
+      .select(['app.id', 'app.role_id', 'app.status', 'app.created_at'])
+      .getMany();
+  }
+
   async findEventApplications(eventId: string, authId: string): Promise<Application[]> {
     const event = await this.eventsService.findOne(eventId);
     const user = await this.usersService.findByAuthId(authId);

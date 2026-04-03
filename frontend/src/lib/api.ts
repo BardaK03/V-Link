@@ -63,6 +63,13 @@ export function deleteEventRole(eventId: string, roleId: string) {
   return request<void>(`/events/${eventId}/roles/${roleId}`, { method: 'DELETE' })
 }
 
+export function updateEventRole(eventId: string, roleId: string, data: Partial<EventRolePayload>) {
+  return request<EventRole>(`/events/${eventId}/roles/${roleId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  })
+}
+
 // ── Applications ──────────────────────────────────────────────────────────────
 
 export interface ApplyPayload {
@@ -104,16 +111,27 @@ export function updateApplicationStatus(
   })
 }
 
+export function getMyEventApplications(eventId: string) {
+  return request<Array<{ id: string; role_id: string; status: string; created_at: string }>>(`/events/${eventId}/my-applications`)
+}
+
 // ── Users ─────────────────────────────────────────────────────────────────────
 
 export function getMe() {
-  return request<{ id: string; email: string; role: string; total_points: number; social_links: Record<string, string> }>('/users/me')
+  return request<{ id: string; email: string; role: string; total_points: number; social_links: Record<string, string>; display_name: string | null; company_name: string | null; avatar_url: string | null }>('/users/me')
 }
 
 export function updateSocialLinks(social_links: Record<string, string>) {
   return request<unknown>('/users/me/social-links', {
     method: 'PATCH',
     body: JSON.stringify({ social_links }),
+  })
+}
+
+export function updateProfile(data: { display_name?: string; company_name?: string; avatar_url?: string }) {
+  return request<unknown>('/users/me/profile', {
+    method: 'PATCH',
+    body: JSON.stringify(data),
   })
 }
 
@@ -140,6 +158,33 @@ export function markApplicationComplete(applicationId: string) {
 
 export function getAllSkills() {
   return request<Array<{ id: number; name: string }>>('/skills')
+}
+
+export function getOrganizationProfile(orgId: string) {
+  return request<OrganizationProfile>(`/users/${orgId}/profile`)
+}
+
+export function getOrganizationEvents(orgId: string) {
+  return request<Event[]>(`/events/by-organizer/${orgId}`)
+}
+
+export function getOrganizationReviews(orgId: string) {
+  return request<OrganizationReview[]>(`/organizations/${orgId}/reviews`)
+}
+
+export function getOrganizationReviewsSummary(orgId: string) {
+  return request<ReviewsSummary>(`/organizations/${orgId}/reviews/summary`)
+}
+
+export function createOrganizationReview(orgId: string, data: { event_id: string; rating: number; comment?: string; photo_url?: string }) {
+  return request<OrganizationReview>(`/organizations/${orgId}/reviews`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export function getReviewEligibility(orgId: string) {
+  return request<EligibleEvent[]>(`/organizations/${orgId}/reviews/eligibility`)
 }
 
 // ── Gamification ───────────────────────────────────────────────────────────────
@@ -175,7 +220,7 @@ export interface EventRole {
 export interface Event {
   id: string
   organizer_id: string
-  organizer: { id: string; email: string; role: string }
+  organizer: { id: string; email: string; role: string; display_name: string | null; company_name: string | null; avatar_url: string | null }
   roles: EventRole[]
   title: string
   description: string | null
@@ -183,6 +228,40 @@ export interface Event {
   start_date: string
   end_date: string
   created_at: string
+}
+
+export interface OrganizationProfile {
+  id: string
+  email: string
+  role: string
+  display_name: string | null
+  company_name: string | null
+  avatar_url: string | null
+  social_links: Record<string, string>
+  created_at: string
+}
+
+export interface OrganizationReview {
+  id: string
+  reviewer_id: string
+  organization_id: string
+  event_id: string
+  rating: number
+  comment: string | null
+  photo_url: string | null
+  reviewer: { id: string; email: string; display_name: string | null; avatar_url: string | null }
+  event: { id: string; title: string }
+  created_at: string
+}
+
+export interface ReviewsSummary {
+  average_rating: number
+  total: number
+}
+
+export interface EligibleEvent {
+  event_id: string
+  event_title: string
 }
 
 export interface Application {

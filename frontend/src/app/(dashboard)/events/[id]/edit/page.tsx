@@ -12,6 +12,7 @@ import {
   updateEvent,
   addEventRole,
   deleteEventRole,
+  updateEventRole,
   getAllSkills,
   type Event,
   type EventRole,
@@ -64,6 +65,9 @@ export default function EditEventPage() {
   const [addingRole, setAddingRole] = useState(false)
   const [roleError, setRoleError] = useState<string | null>(null)
   const [allSkills, setAllSkills] = useState<Array<{ id: number; name: string }>>([])
+  const [editingRoleId, setEditingRoleId] = useState<string | null>(null)
+  const [editingRoleForm, setEditingRoleForm] = useState<RoleFormState>(EMPTY_ROLE_FORM)
+  const [savingRole, setSavingRole] = useState(false)
 
   useEffect(() => {
     if (!loading && !user) {
@@ -177,6 +181,60 @@ export default function EditEventPage() {
     return skill ? skill.name : String(skillId)
   }
 
+  const handleStartEditRole = (role: EventRole) => {
+    setEditingRoleId(role.id)
+    setEditingRoleForm({
+      role_name: role.role_name,
+      description: role.description ?? '',
+      slots_needed: role.slots_needed,
+      hours_required: role.hours_required,
+      points_reward: role.points_reward,
+      required_skills: role.required_skills ?? [],
+    })
+  }
+
+  const handleCancelEditRole = () => {
+    setEditingRoleId(null)
+    setEditingRoleForm(EMPTY_ROLE_FORM)
+  }
+
+  const handleSaveEditRole = async (roleId: string) => {
+    setRoleError(null)
+    if (!editingRoleForm.role_name.trim()) {
+      setRoleError('Numele rolului este obligatoriu')
+      return
+    }
+    setSavingRole(true)
+    try {
+      const updated = await updateEventRole(id, roleId, {
+        role_name: editingRoleForm.role_name.trim(),
+        description: editingRoleForm.description?.trim() || undefined,
+        slots_needed: editingRoleForm.slots_needed,
+        hours_required: editingRoleForm.hours_required,
+        points_reward: editingRoleForm.points_reward,
+        required_skills: editingRoleForm.required_skills,
+      })
+      setRoles((prev) => prev.map((r) => (r.id === roleId ? updated : r)))
+      setEditingRoleId(null)
+    } catch (e: unknown) {
+      setRoleError(e instanceof Error ? e.message : 'Eroare la salvare')
+    } finally {
+      setSavingRole(false)
+    }
+  }
+
+  const toggleEditSkill = (skillId: number) => {
+    setEditingRoleForm((prev) => {
+      const hasSkill = prev.required_skills.includes(skillId)
+      return {
+        ...prev,
+        required_skills: hasSkill
+          ? prev.required_skills.filter((id) => id !== skillId)
+          : [...prev.required_skills, skillId],
+      }
+    })
+  }
+
   return (
     <>
       <Navbar />
@@ -253,54 +311,130 @@ export default function EditEventPage() {
           {/* Existing roles list */}
           {roles.length > 0 && (
             <div className="space-y-3 mb-6">
-              {roles.map((role) => (
-                <div
-                  key={role.id}
-                  className="flex items-start justify-between gap-4 p-4"
-                  style={{
-                    background: 'var(--vl-surface)',
-                    border: '1px solid var(--vl-border)',
-                    borderRadius: 'var(--vl-radius)',
-                  }}
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold" style={{ color: 'var(--vl-dark)' }}>{role.role_name}</p>
-                    {role.description && (
-                      <p className="text-sm mt-0.5" style={{ color: 'var(--vl-muted)' }}>{role.description}</p>
-                    )}
-                    <div className="flex flex-wrap gap-3 mt-1.5 text-xs" style={{ color: 'var(--vl-muted)' }}>
-                      <span>{role.slots_needed} locuri</span>
-                      <span>{role.hours_required}h necesare</span>
-                      <span>{role.points_reward} puncte</span>
-                    </div>
-                    {role.required_skills && role.required_skills.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 mt-2">
-                        {role.required_skills.map((skillId) => (
-                          <span
-                            key={skillId}
-                            className="px-2 py-0.5 text-xs rounded-full"
-                            style={{
-                              background: 'var(--vl-orange-light)',
-                              color: 'var(--vl-orange)',
-                              border: '1px solid var(--vl-orange)',
-                            }}
-                          >
-                            {getSkillName(skillId)}
-                          </span>
-                        ))}
+              {roles.map((role) =>
+                editingRoleId === role.id ? (
+                  // Inline edit form
+                  <div
+                    key={role.id}
+                    className="p-4 space-y-3"
+                    style={{
+                      background: 'var(--vl-surface)',
+                      border: '1px solid var(--vl-orange)',
+                      borderRadius: 'var(--vl-radius)',
+                    }}
+                  >
+                    <h4 className="text-sm font-semibold" style={{ color: 'var(--vl-dark)' }}>Editează rol</h4>
+
+                    {roleError && (
+                      <div className="p-2 rounded text-sm" style={{ backgroundColor: 'var(--vl-error-bg)', color: 'var(--vl-error)' }}>
+                        {roleError}
                       </div>
                     )}
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1" style={{ color: 'var(--vl-text)' }}>Nume rol *</label>
+                      <input
+                        type="text"
+                        value={editingRoleForm.role_name}
+                        onChange={(e) => setEditingRoleForm((prev) => ({ ...prev, role_name: e.target.value }))}
+                        className="w-full px-3 py-2 text-sm focus:outline-none"
+                        style={inputStyle}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1" style={{ color: 'var(--vl-text)' }}>Descriere</label>
+                      <textarea
+                        value={editingRoleForm.description ?? ''}
+                        onChange={(e) => setEditingRoleForm((prev) => ({ ...prev, description: e.target.value }))}
+                        rows={2}
+                        className="w-full px-3 py-2 text-sm focus:outline-none"
+                        style={inputStyle}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium mb-1" style={{ color: 'var(--vl-text)' }}>Locuri</label>
+                        <input type="number" min={1} value={editingRoleForm.slots_needed} onChange={(e) => setEditingRoleForm((prev) => ({ ...prev, slots_needed: Math.max(1, Number(e.target.value)) }))} className="w-full px-3 py-2 text-sm focus:outline-none" style={inputStyle} />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1" style={{ color: 'var(--vl-text)' }}>Ore</label>
+                        <input type="number" min={0} value={editingRoleForm.hours_required} onChange={(e) => setEditingRoleForm((prev) => ({ ...prev, hours_required: Math.max(0, Number(e.target.value)) }))} className="w-full px-3 py-2 text-sm focus:outline-none" style={inputStyle} />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1" style={{ color: 'var(--vl-text)' }}>Puncte</label>
+                        <input type="number" min={0} value={editingRoleForm.points_reward} onChange={(e) => setEditingRoleForm((prev) => ({ ...prev, points_reward: Math.max(0, Number(e.target.value)) }))} className="w-full px-3 py-2 text-sm focus:outline-none" style={inputStyle} />
+                      </div>
+                    </div>
+
+                    {allSkills.length > 0 && (
+                      <div>
+                        <label className="block mb-1.5 text-xs" style={{ color: 'var(--vl-text)' }}>Skill-uri necesare</label>
+                        <div className="flex flex-wrap gap-2">
+                          {allSkills.map((skill) => {
+                            const selected = editingRoleForm.required_skills.includes(skill.id)
+                            return (
+                              <button key={skill.id} type="button" onClick={() => toggleEditSkill(skill.id)} className="px-2 py-1 text-xs rounded-full cursor-pointer" style={{ background: selected ? 'var(--vl-orange-light)' : 'var(--vl-bg)', color: selected ? 'var(--vl-orange)' : 'var(--vl-muted)', border: selected ? '1px solid var(--vl-orange)' : '1px solid var(--vl-border)' }}>
+                                {skill.name}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex gap-2">
+                      <Button type="button" size="sm" disabled={savingRole} onClick={() => handleSaveEditRole(role.id)}>
+                        {savingRole ? 'Se salvează...' : 'Salvează'}
+                      </Button>
+                      <Button type="button" variant="secondary" size="sm" onClick={handleCancelEditRole}>
+                        Anulează
+                      </Button>
+                    </div>
                   </div>
-                  <Button
-                    type="button"
-                    variant="danger"
-                    size="sm"
-                    onClick={() => handleDeleteRole(role.id)}
+                ) : (
+                  // Normal view
+                  <div
+                    key={role.id}
+                    className="flex items-start justify-between gap-4 p-4"
+                    style={{
+                      background: 'var(--vl-surface)',
+                      border: '1px solid var(--vl-border)',
+                      borderRadius: 'var(--vl-radius)',
+                    }}
                   >
-                    Șterge
-                  </Button>
-                </div>
-              ))}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold" style={{ color: 'var(--vl-dark)' }}>{role.role_name}</p>
+                      {role.description && (
+                        <p className="text-sm mt-0.5" style={{ color: 'var(--vl-muted)' }}>{role.description}</p>
+                      )}
+                      <div className="flex flex-wrap gap-3 mt-1.5 text-xs" style={{ color: 'var(--vl-muted)' }}>
+                        <span>{role.slots_needed} locuri</span>
+                        <span>{role.hours_required}h necesare</span>
+                        <span>{role.points_reward} puncte</span>
+                      </div>
+                      {role.required_skills && role.required_skills.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                          {role.required_skills.map((skillId) => (
+                            <span key={skillId} className="px-2 py-0.5 text-xs rounded-full" style={{ background: 'var(--vl-orange-light)', color: 'var(--vl-orange)', border: '1px solid var(--vl-orange)' }}>
+                              {getSkillName(skillId)}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <Button type="button" variant="secondary" size="sm" onClick={() => handleStartEditRole(role)}>
+                        Editează
+                      </Button>
+                      <Button type="button" variant="danger" size="sm" onClick={() => handleDeleteRole(role.id)}>
+                        Șterge
+                      </Button>
+                    </div>
+                  </div>
+                )
+              )}
             </div>
           )}
 
