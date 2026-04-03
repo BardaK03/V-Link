@@ -10,6 +10,7 @@ import { GamificationModule } from './gamification/gamification.module';
 import { VolunteerLogsModule } from './volunteer-logs/volunteer-logs.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { SkillsModule } from './skills/skills.module';
+import { OrganizationReviewsModule } from './organization-reviews/organization-reviews.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { SkillsModule } from './skills/skills.module';
     VolunteerLogsModule,
     NotificationsModule,
     SkillsModule,
+    OrganizationReviewsModule,
   ],
 })
 export class AppModule {}

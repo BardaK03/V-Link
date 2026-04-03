@@ -13,8 +13,10 @@ import {
   addSkill,
   removeSkill,
   updateSocialLinks,
+  updateProfile,
 } from '@/lib/api'
 import { subscribeToPush, unsubscribeFromPush } from '@/lib/push'
+import { createClient } from '@/lib/supabase/client'
 
 const ROLE_LABELS: Record<string, string> = {
   VOLUNTEER: 'Voluntar',
@@ -44,6 +46,13 @@ export default function ProfilePage() {
   const [subscribed, setSubscribed] = useState(false)
   const [notifLoading, setNotifLoading] = useState(false)
   const [notifError, setNotifError] = useState<string | null>(null)
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [avatarUploading, setAvatarUploading] = useState(false)
+  const [avatarError, setAvatarError] = useState<string | null>(null)
+  const [displayName, setDisplayName] = useState('')
+  const [companyName, setCompanyName] = useState('')
+  const [savingProfile, setSavingProfile] = useState(false)
+  const [profileSaved, setProfileSaved] = useState(false)
 
   useEffect(() => {
     if (!loading && !user) { router.push('/login'); return }
@@ -59,6 +68,11 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (dbUser?.social_links) setSocialLinks(dbUser.social_links)
+    if (dbUser) {
+      setAvatarUrl((dbUser as unknown as { avatar_url?: string | null }).avatar_url ?? null)
+      setDisplayName((dbUser as unknown as { display_name?: string | null }).display_name ?? '')
+      setCompanyName((dbUser as unknown as { company_name?: string | null }).company_name ?? '')
+    }
   }, [dbUser])
 
   useEffect(() => {
@@ -81,6 +95,53 @@ export default function ProfilePage() {
     }
     checkSubscription()
   }, [])
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarError('Fișierul trebuie să fie mai mic de 5MB')
+      return
+    }
+    setAvatarUploading(true)
+    setAvatarError(null)
+    try {
+      const supabase = createClient()
+      const ext = file.name.split('.').pop()
+      const filename = `${user!.id}.${ext}`
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filename, file, { upsert: true })
+      if (uploadError) throw new Error(uploadError.message)
+      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(filename)
+      const publicUrl = urlData.publicUrl
+      await updateProfile({ avatar_url: publicUrl })
+      setAvatarUrl(publicUrl)
+      await refreshDbUser()
+    } catch (e: unknown) {
+      setAvatarError(e instanceof Error ? e.message : 'Eroare la încărcarea pozei')
+    } finally {
+      setAvatarUploading(false)
+    }
+  }
+
+  const handleSaveProfile = async () => {
+    setSavingProfile(true)
+    setError(null)
+    try {
+      await updateProfile({
+        display_name: displayName.trim() || undefined,
+        company_name: dbUser?.role === 'ORGANIZER' ? (companyName.trim() || undefined) : undefined,
+      })
+      await refreshDbUser()
+      setProfileSaved(true)
+      setTimeout(() => setProfileSaved(false), 2500)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Eroare la salvare')
+    } finally {
+      setSavingProfile(false)
+    }
+  }
 
   const handleSaveLinks = async () => {
     setSavingLinks(true)
@@ -181,6 +242,85 @@ export default function ProfilePage() {
             {error}
           </div>
         )}
+
+        {/* Avatar */}
+        <section
+          className="rounded-xl border p-5 mb-6"
+          style={{ background: 'var(--vl-surface)', borderColor: 'var(--vl-border)' }}
+        >
+          <h2 className="font-semibold mb-4" style={{ color: 'var(--vl-dark)' }}>Poza de profil</h2>
+          <div className="flex items-center gap-5">
+            <div
+              className="rounded-full flex items-center justify-center overflow-hidden shrink-0"
+              style={{ width: 72, height: 72, background: 'var(--vl-info-bg)', border: '2px solid var(--vl-border)' }}
+            >
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <span style={{ fontSize: '2rem', color: 'var(--vl-muted)' }}>👤</span>
+              )}
+            </div>
+            <div>
+              <label
+                htmlFor="avatar-upload"
+                style={{
+                  display: 'inline-block',
+                  cursor: avatarUploading ? 'not-allowed' : 'pointer',
+                  padding: '0.4rem 1rem',
+                  borderRadius: 'var(--vl-radius)',
+                  border: '1px solid var(--vl-border)',
+                  fontSize: '0.875rem',
+                  color: 'var(--vl-text)',
+                  background: 'var(--vl-bg)',
+                }}
+              >
+                {avatarUploading ? 'Se încarcă...' : 'Schimbă poza'}
+              </label>
+              <input
+                id="avatar-upload"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarUpload}
+                disabled={avatarUploading}
+              />
+              {avatarError && <p className="mt-1 text-xs" style={{ color: 'var(--vl-error)' }}>{avatarError}</p>}
+              <p className="mt-1 text-xs" style={{ color: 'var(--vl-muted)' }}>JPG, PNG sau WebP, max 5MB</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Display name / Company name */}
+        <section
+          className="rounded-xl border p-5 mb-6"
+          style={{ background: 'var(--vl-surface)', borderColor: 'var(--vl-border)' }}
+        >
+          <h2 className="font-semibold mb-4" style={{ color: 'var(--vl-dark)' }}>Profil public</h2>
+          <div className="flex flex-col gap-3">
+            <Input
+              label="Nume afișat"
+              placeholder="Cum vrei să apari pe platformă"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+            />
+            {dbUser?.role === 'ORGANIZER' && (
+              <Input
+                label="Numele companiei / organizației"
+                placeholder="ex. Asociația pentru Voluntariat Cluj"
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+              />
+            )}
+          </div>
+          <div className="mt-4 flex items-center gap-3">
+            <Button variant="primary" loading={savingProfile} onClick={handleSaveProfile}>
+              Salvează profil
+            </Button>
+            {profileSaved && (
+              <span className="text-sm" style={{ color: 'var(--vl-success)' }}>Salvat!</span>
+            )}
+          </div>
+        </section>
 
         {/* Info card */}
         <section

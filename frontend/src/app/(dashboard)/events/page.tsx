@@ -67,6 +67,11 @@ export default function EventsPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <h2 className="font-semibold text-lg" style={{ color: 'var(--vl-dark)' }}>{event.title}</h2>
+                      {event.organizer && (
+                        <p className="text-xs mt-0.5" style={{ color: 'var(--vl-orange)' }}>
+                          {event.organizer.company_name || event.organizer.display_name || event.organizer.email}
+                        </p>
+                      )}
                       {event.description && (
                         <p className="text-sm mt-1 line-clamp-2" style={{ color: 'var(--vl-muted)' }}>{event.description}</p>
                       )}

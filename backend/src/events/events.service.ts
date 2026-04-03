@@ -70,6 +70,10 @@ export class EventsService {
     const event = await this.findOne(id);
     await this.assertOwner(event, authId);
 
+    if (new Date(event.start_date) <= new Date()) {
+      throw new ForbiddenException('Nu poți edita un eveniment care a început sau s-a finalizat');
+    }
+
     const updated = Object.assign({}, event, {
       title: dto.title ?? event.title,
       description: dto.description ?? event.description,
@@ -85,7 +89,20 @@ export class EventsService {
   async remove(id: string, authId: string): Promise<void> {
     const event = await this.findOne(id);
     await this.assertOwner(event, authId);
+
+    if (new Date(event.start_date) <= new Date()) {
+      throw new ForbiddenException('Nu poți șterge un eveniment care a început sau s-a finalizat');
+    }
+
     await this.eventRepo.delete(id);
+  }
+
+  async findByOrganizer(organizerId: string): Promise<Event[]> {
+    return this.eventRepo.find({
+      where: { organizer_id: organizerId },
+      relations: ['roles'],
+      order: { start_date: 'DESC' },
+    });
   }
 
   private async assertOwner(event: Event, authId: string): Promise<void> {

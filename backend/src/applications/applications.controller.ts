@@ -26,6 +26,12 @@ export class ApplicationsController {
     return this.applicationsService.findMyApplications(req.user.id);
   }
 
+  // Volunteer checks their own applications for a specific event
+  @Get('events/:eventId/my-applications')
+  getMyEventApplications(@Param('eventId') eventId: string, @Request() req: any) {
+    return this.applicationsService.findMyApplicationsForEvent(req.user.id, eventId);
+  }
+
   // Organizer sees ALL applications received across all their events
   @Get('applications/received')
   @UseGuards(RoleGuard)
