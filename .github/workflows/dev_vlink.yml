@@ -62,5 +62,6 @@ jobs:
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'vlink'
+          slot-name: 'production'
           package: node-app.zip
           
