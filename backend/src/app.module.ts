@@ -11,6 +11,7 @@ import { VolunteerLogsModule } from './volunteer-logs/volunteer-logs.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { SkillsModule } from './skills/skills.module';
 import { OrganizationReviewsModule } from './organization-reviews/organization-reviews.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { OrganizationReviewsModule } from './organization-reviews/organization-r
     NotificationsModule,
     SkillsModule,
     OrganizationReviewsModule,
+    AdminModule,
   ],
 })
 export class AppModule {}

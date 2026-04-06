@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/Button'
 
 export function Navbar() {
-  const { user, signOut } = useAuth()
+  const { user, dbUser, signOut } = useAuth()
 
   return (
     <nav
@@ -105,6 +105,22 @@ export function Navbar() {
               >
                 Dashboard
               </Link>
+              {dbUser?.role === 'ADMIN' && (
+                <Link
+                  href="/admin"
+                  style={{
+                    fontSize: '0.8rem',
+                    color: 'var(--vl-error)',
+                    fontWeight: 600,
+                    textDecoration: 'none',
+                    padding: '3px 10px',
+                    background: 'var(--vl-error-bg)',
+                    borderRadius: 99,
+                  }}
+                >
+                  Admin
+                </Link>
+              )}
               <Button variant="secondary" size="sm" onClick={signOut}>
                 Deconectare
               </Button>

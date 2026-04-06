@@ -327,3 +327,82 @@ export interface EventRolePayload {
   points_reward: number
   required_skills?: number[]
 }
+
+// ── Admin ─────────────────────────────────────────────────────────────────────
+
+export interface AdminStats {
+  applications: {
+    total: number
+    approved: number
+    rejected: number
+    pending: number
+    completed: number
+    approvalRate: number
+    rejectionRate: number
+    avgMatchScore: number
+    byOrganization: Array<{
+      orgId: string
+      orgName: string
+      total: number
+      approved: number
+      rejected: number
+      pending: number
+      approvalRate: number
+    }>
+    monthlyTrend: Array<{ month: string; total: number; approved: number; rejected: number }>
+  }
+  users: {
+    total: number
+    volunteers: number
+    organizers: number
+    admins: number
+    newThisMonth: number
+    newThisWeek: number
+  }
+  events: {
+    total: number
+    active: number
+    completed: number
+    createdThisMonth: number
+    topRoles: Array<{ roleName: string; applicationCount: number; approvedCount: number }>
+    topSkills: Array<{ skillName: string; usedInRoles: number; usedInEvents: number }>
+    topOrganizations: Array<{
+      orgId: string
+      orgName: string
+      eventsCount: number
+      totalApplications: number
+      acceptedVolunteers: number
+    }>
+  }
+  marketplace: {
+    topProducts: Array<{ name: string; pointCost: number; purchaseCount: number; totalPointsSpent: number }>
+    totalPointsSpent: number
+    totalPointsEarned: number
+    usersWithTransactions: number
+  }
+  volunteering: {
+    topEventsByPoints: Array<{
+      eventTitle: string
+      eventId: string
+      totalPointsAwarded: number
+      volunteerCount: number
+      avgHours: number
+    }>
+    totalLogs: number
+    totalPointsAwarded: number
+    totalHoursVolunteered: number
+    uniqueVolunteers: number
+  }
+  reviews: {
+    avgRatingByOrg: Array<{ orgId: string; orgName: string; avgRating: number; reviewCount: number }>
+    overallAvgRating: number
+    totalReviews: number
+    fiveStarCount: number
+    fourPlusStarCount: number
+  }
+  recentActivity: Array<{ type: string; description: string; actor: string; timestamp: string }>
+}
+
+export function getAdminStats() {
+  return request<AdminStats>('/admin/stats')
+}
