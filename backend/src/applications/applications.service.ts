@@ -40,6 +40,11 @@ export class ApplicationsService {
     const role = await this.roleRepo.findOne({ where: { id: dto.role_id } });
     if (!role) throw new NotFoundException('Role not found');
 
+    const event = await this.eventsService.findOne(role.event_id);
+    if (event.status === 'COMPLETED') {
+      throw new ForbiddenException('Aplicațiile pentru acest eveniment sunt închise');
+    }
+
     const existing = await this.appRepo.findOne({
       where: { user_id: user.id, role_id: dto.role_id },
     });

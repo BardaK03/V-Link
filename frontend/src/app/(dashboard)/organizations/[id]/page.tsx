@@ -422,9 +422,19 @@ export default function OrganizationProfilePage() {
                         <p className="text-sm font-semibold" style={{ color: 'var(--vl-dark)' }}>
                           {review.reviewer?.display_name || review.reviewer?.email}
                         </p>
-                        <p className="text-xs" style={{ color: 'var(--vl-muted)' }}>
-                          {review.event?.title}
-                        </p>
+                        {review.event?.id ? (
+                          <Link
+                            href={`/events/${review.event.id}`}
+                            className="text-xs hover:underline"
+                            style={{ color: 'var(--vl-orange)' }}
+                          >
+                            {review.event.title}
+                          </Link>
+                        ) : (
+                          <p className="text-xs" style={{ color: 'var(--vl-muted)' }}>
+                            {review.event?.title}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <div className="text-right shrink-0">

@@ -51,6 +51,13 @@ export class EventsController {
     return this.eventsService.update(id, req.user.id, dto);
   }
 
+  @Patch(':id/complete')
+  @UseGuards(RoleGuard)
+  @Roles(UserRole.ORGANIZER, UserRole.ADMIN)
+  markCompleted(@Param('id') id: string, @Request() req: any) {
+    return this.eventsService.markCompleted(id, req.user.id);
+  }
+
   @Delete(':id')
   @UseGuards(RoleGuard)
   @Roles(UserRole.ORGANIZER, UserRole.ADMIN)

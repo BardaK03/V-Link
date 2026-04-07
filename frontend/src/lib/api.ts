@@ -50,6 +50,10 @@ export function deleteEvent(id: string) {
   return request<void>(`/events/${id}`, { method: 'DELETE' })
 }
 
+export function completeEvent(id: string) {
+  return request<Event>(`/events/${id}/complete`, { method: 'PATCH' })
+}
+
 // ── Event Roles ───────────────────────────────────────────────────────────────
 
 export function addEventRole(eventId: string, data: EventRolePayload) {
@@ -227,6 +231,7 @@ export interface Event {
   address: string
   start_date: string
   end_date: string
+  status: 'ACTIVE' | 'COMPLETED' | 'CANCELLED'
   created_at: string
 }
 

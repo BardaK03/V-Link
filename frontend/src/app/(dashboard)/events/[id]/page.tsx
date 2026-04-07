@@ -10,6 +10,7 @@ import {
   getEvent,
   applyToRole,
   deleteEvent,
+  completeEvent,
   getAllSkills,
   getMyEventApplications,
   type Event,
@@ -65,6 +66,7 @@ export default function EventDetailPage() {
 
   const isOwner = event.organizer?.id === user.id || event.organizer_id === user.id
   const isVolunteer = !isOwner && dbUser?.role !== 'ADMIN'
+  const isCompleted = event.status === 'COMPLETED'
 
   const getSkillName = (id: number) => allSkills.find(s => s.id === id)?.name ?? `Skill ${id}`
 
@@ -92,6 +94,16 @@ export default function EventDetailPage() {
       setError(e instanceof Error ? e.message : 'Eroare necunoscută')
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const handleMarkCompleted = async () => {
+    if (!confirm('Marchezi evenimentul ca finalizat? Voluntarii nu vor mai putea aplica.')) return
+    try {
+      const updated = await completeEvent(id)
+      setEvent(updated)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Eroare la finalizarea evenimentului')
     }
   }
 
@@ -129,23 +141,42 @@ export default function EventDetailPage() {
         {/* Event card */}
         <div className="rounded-xl border p-6 mb-6" style={{ background: 'var(--vl-surface)', borderColor: 'var(--vl-border)' }}>
           <div className="flex items-start justify-between gap-4">
-            <h1
-              className="text-2xl font-bold"
-              style={{ fontFamily: 'var(--vl-font-display)', color: 'var(--vl-dark)' }}
-            >
-              {event.title}
-            </h1>
+            <div>
+              <h1
+                className="text-2xl font-bold"
+                style={{ fontFamily: 'var(--vl-font-display)', color: 'var(--vl-dark)' }}
+              >
+                {event.title}
+              </h1>
+              {isCompleted && (
+                <span
+                  className="inline-block mt-2 px-3 py-0.5 rounded-full text-xs font-semibold"
+                  style={{ background: 'var(--vl-warning-bg)', color: 'var(--vl-warning)' }}
+                >
+                  Eveniment finalizat
+                </span>
+              )}
+            </div>
             {isOwner && (
-              <div className="flex gap-2 shrink-0">
-                <Link href={`/events/${id}/edit`}>
-                  <Button variant="secondary" size="sm">Editează</Button>
-                </Link>
+              <div className="flex gap-2 shrink-0 flex-wrap justify-end">
+                {!isCompleted && (
+                  <Link href={`/events/${id}/edit`}>
+                    <Button variant="secondary" size="sm">Editează</Button>
+                  </Link>
+                )}
                 <Link href={`/events/${id}/applications`}>
                   <Button variant="secondary" size="sm">Aplicații</Button>
                 </Link>
-                <Button variant="secondary" size="sm" onClick={handleDelete}>
-                  Șterge
-                </Button>
+                {!isCompleted && (
+                  <Button variant="secondary" size="sm" onClick={handleMarkCompleted}>
+                    Marchează finalizat
+                  </Button>
+                )}
+                {!isCompleted && (
+                  <Button variant="secondary" size="sm" onClick={handleDelete}>
+                    Șterge
+                  </Button>
+                )}
               </div>
             )}
           </div>
@@ -224,7 +255,7 @@ export default function EventDetailPage() {
                       </div>
                     )}
                   </div>
-                  {isVolunteer && (
+                  {isVolunteer && !isCompleted && (
                     <Button
                       variant={appliedRoles.has(role.id) ? 'secondary' : 'primary'}
                       size="sm"
@@ -233,6 +264,11 @@ export default function EventDetailPage() {
                     >
                       {appliedRoles.has(role.id) ? 'Aplicat ✓' : 'Aplică'}
                     </Button>
+                  )}
+                  {isVolunteer && isCompleted && (
+                    <span className="text-xs" style={{ color: 'var(--vl-muted)' }}>
+                      Aplicații închise
+                    </span>
                   )}
                 </div>
               </div>

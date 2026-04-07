@@ -32,6 +32,9 @@ export class Event {
   @Column({ type: 'timestamptz' })
   end_date: Date;
 
+  @Column({ type: 'text', default: 'ACTIVE' })
+  status: 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date;
 }

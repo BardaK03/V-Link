@@ -97,6 +97,19 @@ export class EventsService {
     await this.eventRepo.delete(id);
   }
 
+  async markCompleted(id: string, authId: string): Promise<Event> {
+    const event = await this.findOne(id);
+    await this.assertOwner(event, authId);
+
+    if (event.status === 'COMPLETED') {
+      return event;
+    }
+
+    const updated = Object.assign({}, event, { status: 'COMPLETED' as const });
+    await this.eventRepo.save(updated);
+    return this.findOne(id);
+  }
+
   async findByOrganizer(organizerId: string): Promise<Event[]> {
     return this.eventRepo.find({
       where: { organizer_id: organizerId },
