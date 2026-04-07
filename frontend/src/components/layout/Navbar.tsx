@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button'
 
 export function Navbar() {
   const { user, dbUser, signOut } = useAuth()
-
+//test
   return (
     <nav
       style={{
