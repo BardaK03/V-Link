@@ -5,3 +5,4 @@ export class UpdateApplicationStatusDto {
   @IsEnum(ApplicationStatus)
   status: ApplicationStatus.APPROVED | ApplicationStatus.REJECTED | ApplicationStatus.COMPLETED;
 }
+//TEST
