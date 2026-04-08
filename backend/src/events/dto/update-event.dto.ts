@@ -20,4 +20,8 @@ export class UpdateEventDto {
   @IsOptional()
   @IsDateString()
   end_date?: string;
+
+  @IsOptional()
+  @IsDateString()
+  registration_deadline?: string;
 }

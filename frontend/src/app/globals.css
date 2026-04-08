@@ -137,3 +137,36 @@ a:hover {
   background: var(--vl-border-strong);
   border-radius: 999px;
 }
+
+/* ── Cosmetic Animations ───────────────────────────────────────── */
+@keyframes vl-pulse-kf {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+@keyframes vl-rainbow-kf {
+  0%   { color: #FF6B35; }
+  20%  { color: #7C3AED; }
+  40%  { color: #059669; }
+  60%  { color: #2563EB; }
+  80%  { color: #D97706; }
+  100% { color: #FF6B35; }
+}
+@keyframes vl-glow-kf {
+  0%, 100% { text-shadow: 0 0 4px currentColor; }
+  50% { text-shadow: 0 0 12px currentColor, 0 0 20px currentColor; }
+}
+@keyframes vl-shake-kf {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+@keyframes vl-float-kf {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.vl-anim-pulse    { animation: vl-pulse-kf 2s ease-in-out infinite; }
+.vl-anim-rainbow  { animation: vl-rainbow-kf 4s linear infinite; }
+.vl-anim-glow     { animation: vl-glow-kf 2s ease-in-out infinite; }
+.vl-anim-shake:hover { animation: vl-shake-kf 0.3s ease-in-out; }
+.vl-anim-float    { animation: vl-float-kf 3s ease-in-out infinite; }

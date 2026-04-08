@@ -58,6 +58,20 @@ export class EventsController {
     return this.eventsService.markCompleted(id, req.user.id);
   }
 
+  @Patch(':id/registration/close')
+  @UseGuards(RoleGuard)
+  @Roles(UserRole.ORGANIZER, UserRole.ADMIN)
+  closeRegistration(@Param('id') id: string, @Request() req: any) {
+    return this.eventsService.closeRegistration(id, req.user.id);
+  }
+
+  @Patch(':id/registration/open')
+  @UseGuards(RoleGuard)
+  @Roles(UserRole.ORGANIZER, UserRole.ADMIN)
+  openRegistration(@Param('id') id: string, @Request() req: any) {
+    return this.eventsService.openRegistration(id, req.user.id);
+  }
+
   @Delete(':id')
   @UseGuards(RoleGuard)
   @Roles(UserRole.ORGANIZER, UserRole.ADMIN)

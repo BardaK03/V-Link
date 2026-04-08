@@ -54,6 +54,72 @@ export function completeEvent(id: string) {
   return request<Event>(`/events/${id}/complete`, { method: 'PATCH' })
 }
 
+export function closeEventRegistration(id: string) {
+  return request<Event>(`/events/${id}/registration/close`, { method: 'PATCH' })
+}
+
+export function openEventRegistration(id: string) {
+  return request<Event>(`/events/${id}/registration/open`, { method: 'PATCH' })
+}
+
+// ── Shifts ────────────────────────────────────────────────────────────────────
+
+export interface ShiftAssignment {
+  id: string
+  application_id: string
+  role_id: string
+  user_id: string
+  event_id: string
+  shift_date: string
+  start_time: string
+  end_time: string
+  hours: number
+  google_event_id: string | null
+  created_at: string
+  user?: { id: string; email: string; display_name: string | null; avatar_url: string | null }
+  role?: EventRole
+}
+
+export function getEventShifts(eventId: string) {
+  return request<ShiftAssignment[]>(`/events/${eventId}/shifts`)
+}
+
+export function autoSplitShifts(eventId: string, role_id: string) {
+  return request<ShiftAssignment[]>(`/events/${eventId}/shifts/auto-split`, {
+    method: 'POST',
+    body: JSON.stringify({ role_id }),
+  })
+}
+
+export function createShift(
+  eventId: string,
+  data: { application_id: string; shift_date: string; start_time: string; end_time: string; hours: number },
+) {
+  return request<ShiftAssignment>(`/events/${eventId}/shifts`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export function updateShift(shiftId: string, data: Partial<{ shift_date: string; start_time: string; end_time: string; hours: number }>) {
+  return request<ShiftAssignment>(`/shifts/${shiftId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  })
+}
+
+export function deleteShift(shiftId: string) {
+  return request<void>(`/shifts/${shiftId}`, { method: 'DELETE' })
+}
+
+export function getMyShifts(from?: string, to?: string) {
+  const params = new URLSearchParams()
+  if (from) params.set('from', from)
+  if (to) params.set('to', to)
+  const q = params.toString()
+  return request<ShiftAssignment[]>(`/shifts/mine${q ? `?${q}` : ''}`)
+}
+
 // ── Event Roles ───────────────────────────────────────────────────────────────
 
 export function addEventRole(eventId: string, data: EventRolePayload) {
@@ -191,6 +257,37 @@ export function getReviewEligibility(orgId: string) {
   return request<EligibleEvent[]>(`/organizations/${orgId}/reviews/eligibility`)
 }
 
+// ── Calendar ─────────────────────────────────────────────────────────────────
+
+export interface CalendarEntry {
+  id: string
+  type: 'shift' | 'event'
+  title: string
+  date: string
+  start_time: string
+  end_time: string
+  hours: number
+  event_id: string
+  event_title: string
+  role_name?: string
+}
+
+export function getMyCalendar(from?: string, to?: string) {
+  const params = new URLSearchParams()
+  if (from) params.set('from', from)
+  if (to) params.set('to', to)
+  const q = params.toString()
+  return request<CalendarEntry[]>(`/calendar/me${q ? `?${q}` : ''}`)
+}
+
+export function getGoogleCalendarStatus() {
+  return request<{ connected: boolean }>('/calendar/google/status')
+}
+
+export function disconnectGoogleCalendar() {
+  return request<{ disconnected: boolean }>('/calendar/google/disconnect', { method: 'DELETE' })
+}
+
 // ── Gamification ───────────────────────────────────────────────────────────────
 
 export function getLeaderboard() {
@@ -232,6 +329,8 @@ export interface Event {
   start_date: string
   end_date: string
   status: 'ACTIVE' | 'COMPLETED' | 'CANCELLED'
+  registration_status: 'OPEN' | 'CLOSED'
+  registration_deadline: string | null
   created_at: string
 }
 
@@ -274,7 +373,7 @@ export interface Application {
   user_id: string
   role_id: string
   role: EventRole & { event: Event }
-  user?: { id: string; email: string; social_links?: Record<string, string> }
+  user?: { id: string; email: string; display_name?: string | null; avatar_url?: string | null; social_links?: Record<string, string> }
   status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'COMPLETED'
   match_score: number | null
   motivation_text: string | null
@@ -289,6 +388,7 @@ export interface CreateEventPayload {
   start_date: string
   end_date: string
   roles?: EventRolePayload[]
+  registration_deadline?: string
 }
 
 export interface UpdateEventPayload {
@@ -297,6 +397,7 @@ export interface UpdateEventPayload {
   address?: string
   start_date?: string
   end_date?: string
+  registration_deadline?: string | null
 }
 
 export interface LeaderboardEntry {
@@ -331,6 +432,87 @@ export interface EventRolePayload {
   hours_required: number
   points_reward: number
   required_skills?: number[]
+}
+
+// ── Marketplace ───────────────────────────────────────────────────────────────
+
+export type ItemCategory =
+  | 'COSMETIC_NAME_COLOR'
+  | 'COSMETIC_NAME_ANIMATION'
+  | 'COSMETIC_AVATAR_FRAME'
+  | 'COSMETIC_GLOW'
+  | 'PERK'
+
+export interface MarketplaceItem {
+  id: number
+  slug: string
+  name: string
+  description: string | null
+  point_cost: number
+  category: ItemCategory
+  payload: Record<string, unknown>
+  is_active: boolean
+  stock: number | null
+}
+
+export interface EquippedCosmetics {
+  user_id: string
+  name_color_item: MarketplaceItem | null
+  name_animation_item: MarketplaceItem | null
+  avatar_frame_item: MarketplaceItem | null
+  glow_item: MarketplaceItem | null
+}
+
+export interface InventoryItem {
+  id: string
+  user_id: string
+  item_id: number
+  item: MarketplaceItem
+  acquired_at: string
+  metadata: Record<string, unknown>
+}
+
+export interface MarketplacePurchase {
+  id: string
+  user_id: string
+  item_id: number
+  item: MarketplaceItem
+  point_cost: number
+  status: string
+  redemption_code: string | null
+  created_at: string
+}
+
+export function getMarketplaceItems(category?: ItemCategory) {
+  const q = category ? `?category=${encodeURIComponent(category)}` : ''
+  return request<MarketplaceItem[]>(`/marketplace/items${q}`)
+}
+
+export function purchaseItem(item_id: number) {
+  return request<MarketplacePurchase>('/marketplace/purchase', {
+    method: 'POST',
+    body: JSON.stringify({ item_id }),
+  })
+}
+
+export function getMyInventory() {
+  return request<InventoryItem[]>('/marketplace/me/inventory')
+}
+
+export function getMyEquipped() {
+  return request<EquippedCosmetics | Record<string, never>>('/marketplace/me/equipped')
+}
+
+export function equipCosmetics(data: {
+  name_color_item_id?: number | null
+  name_animation_item_id?: number | null
+  avatar_frame_item_id?: number | null
+  glow_item_id?: number | null
+}) {
+  return request<EquippedCosmetics>('/marketplace/me/equip', {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  })
 }
 
 // ── Admin ─────────────────────────────────────────────────────────────────────

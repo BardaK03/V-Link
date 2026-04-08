@@ -148,14 +148,32 @@ export default function EventDetailPage() {
               >
                 {event.title}
               </h1>
-              {isCompleted && (
-                <span
-                  className="inline-block mt-2 px-3 py-0.5 rounded-full text-xs font-semibold"
-                  style={{ background: 'var(--vl-warning-bg)', color: 'var(--vl-warning)' }}
-                >
-                  Eveniment finalizat
-                </span>
-              )}
+              <div className="flex flex-wrap gap-2 mt-2">
+                {isCompleted && (
+                  <span
+                    className="inline-block px-3 py-0.5 rounded-full text-xs font-semibold"
+                    style={{ background: 'var(--vl-warning-bg)', color: 'var(--vl-warning)' }}
+                  >
+                    Eveniment finalizat
+                  </span>
+                )}
+                {event.registration_status === 'CLOSED' && !isCompleted && (
+                  <span
+                    className="inline-block px-3 py-0.5 rounded-full text-xs font-semibold"
+                    style={{ background: 'var(--vl-error-bg)', color: 'var(--vl-error)' }}
+                  >
+                    Înscrieri închise
+                  </span>
+                )}
+                {event.registration_status === 'OPEN' && !isCompleted && (
+                  <span
+                    className="inline-block px-3 py-0.5 rounded-full text-xs font-semibold"
+                    style={{ background: 'rgba(22,163,74,0.1)', color: '#16a34a' }}
+                  >
+                    Înscrieri deschise
+                  </span>
+                )}
+              </div>
             </div>
             {isOwner && (
               <div className="flex gap-2 shrink-0 flex-wrap justify-end">
@@ -255,7 +273,7 @@ export default function EventDetailPage() {
                       </div>
                     )}
                   </div>
-                  {isVolunteer && !isCompleted && (
+                  {isVolunteer && !isCompleted && event.registration_status === 'OPEN' && (
                     <Button
                       variant={appliedRoles.has(role.id) ? 'secondary' : 'primary'}
                       size="sm"
@@ -265,7 +283,7 @@ export default function EventDetailPage() {
                       {appliedRoles.has(role.id) ? 'Aplicat ✓' : 'Aplică'}
                     </Button>
                   )}
-                  {isVolunteer && isCompleted && (
+                  {isVolunteer && (isCompleted || event.registration_status === 'CLOSED') && (
                     <span className="text-xs" style={{ color: 'var(--vl-muted)' }}>
                       Aplicații închise
                     </span>

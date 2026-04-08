@@ -28,6 +28,8 @@ export class EventsService {
       address: dto.address,
       start_date: new Date(dto.start_date),
       end_date: new Date(dto.end_date),
+      registration_deadline: dto.registration_deadline ? new Date(dto.registration_deadline) : null,
+      registration_status: 'OPEN',
     });
 
     const saved = await this.eventRepo.save(event);
@@ -80,6 +82,12 @@ export class EventsService {
       address: dto.address ?? event.address,
       start_date: dto.start_date ? new Date(dto.start_date) : event.start_date,
       end_date: dto.end_date ? new Date(dto.end_date) : event.end_date,
+      registration_deadline:
+        dto.registration_deadline !== undefined
+          ? dto.registration_deadline
+            ? new Date(dto.registration_deadline)
+            : null
+          : event.registration_deadline,
     });
 
     await this.eventRepo.save(updated);
@@ -106,6 +114,28 @@ export class EventsService {
     }
 
     const updated = Object.assign({}, event, { status: 'COMPLETED' as const });
+    await this.eventRepo.save(updated);
+    return this.findOne(id);
+  }
+
+  async closeRegistration(id: string, authId: string): Promise<Event> {
+    const event = await this.findOne(id);
+    await this.assertOwner(event, authId);
+    const updated = Object.assign({}, event, { registration_status: 'CLOSED' as const });
+    await this.eventRepo.save(updated);
+    return this.findOne(id);
+  }
+
+  async openRegistration(id: string, authId: string): Promise<Event> {
+    const event = await this.findOne(id);
+    await this.assertOwner(event, authId);
+    if (
+      event.registration_deadline &&
+      new Date(event.registration_deadline) < new Date()
+    ) {
+      throw new ForbiddenException('Deadline-ul de înscriere a trecut; nu poți redeschide.');
+    }
+    const updated = Object.assign({}, event, { registration_status: 'OPEN' as const });
     await this.eventRepo.save(updated);
     return this.findOne(id);
   }

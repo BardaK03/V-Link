@@ -52,4 +52,8 @@ export class CreateEventDto {
   @ValidateNested({ each: true })
   @Type(() => CreateEventRoleDto)
   roles?: CreateEventRoleDto[];
+
+  @IsOptional()
+  @IsDateString()
+  registration_deadline?: string;
 }

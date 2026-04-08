@@ -10,6 +10,8 @@ import { Input } from '@/components/ui/Input'
 import {
   getEvent,
   updateEvent,
+  closeEventRegistration,
+  openEventRegistration,
   addEventRole,
   deleteEventRole,
   updateEventRole,
@@ -55,8 +57,11 @@ export default function EditEventPage() {
   const [address, setAddress] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+  const [registrationDeadline, setRegistrationDeadline] = useState('')
+  const [registrationStatus, setRegistrationStatus] = useState<'OPEN' | 'CLOSED'>('OPEN')
   const [fetching, setFetching] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [closingReg, setClosingReg] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // Role management state
@@ -86,6 +91,8 @@ export default function EditEventPage() {
           setAddress(e.address)
           setStartDate(toLocalDatetime(e.start_date))
           setEndDate(toLocalDatetime(e.end_date))
+          setRegistrationDeadline(e.registration_deadline ? toLocalDatetime(e.registration_deadline) : '')
+          setRegistrationStatus(e.registration_status ?? 'OPEN')
           setRoles(e.roles ?? [])
           setAllSkills(skills)
         })
@@ -115,12 +122,30 @@ export default function EditEventPage() {
         address: address.trim(),
         start_date: new Date(startDate).toISOString(),
         end_date: new Date(endDate).toISOString(),
+        registration_deadline: registrationDeadline
+          ? new Date(registrationDeadline).toISOString()
+          : null,
       })
       router.push(`/events/${id}`)
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Eroare la actualizare')
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const handleToggleRegistration = async () => {
+    setClosingReg(true)
+    setError(null)
+    try {
+      const updated = registrationStatus === 'OPEN'
+        ? await closeEventRegistration(id)
+        : await openEventRegistration(id)
+      setRegistrationStatus(updated.registration_status)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Eroare')
+    } finally {
+      setClosingReg(false)
     }
   }
 
@@ -297,6 +322,46 @@ export default function EditEventPage() {
                 style={inputStyle}
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--vl-text)' }}>
+              Deadline înscrieri <span style={{ color: 'var(--vl-muted)', fontWeight: 400 }}>(opțional)</span>
+            </label>
+            <input
+              type="datetime-local"
+              value={registrationDeadline}
+              onChange={(e) => setRegistrationDeadline(e.target.value)}
+              className="w-full px-3 py-2 text-sm focus:outline-none"
+              style={inputStyle}
+            />
+          </div>
+
+          <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: 'var(--vl-bg)', border: '1px solid var(--vl-border)', borderRadius: 'var(--vl-radius)' }}>
+            <div>
+              <p className="text-sm font-medium" style={{ color: 'var(--vl-text)' }}>Stare înscrieri</p>
+              <p className="text-xs mt-0.5" style={{ color: registrationStatus === 'OPEN' ? 'var(--vl-success, #16a34a)' : 'var(--vl-error)' }}>
+                {registrationStatus === 'OPEN' ? '● Deschise' : '● Închise'}
+              </p>
+            </div>
+            <button
+              type="button"
+              disabled={closingReg}
+              onClick={handleToggleRegistration}
+              className="px-3 py-1.5 text-sm rounded-lg"
+              style={{
+                background: registrationStatus === 'OPEN' ? 'var(--vl-error-bg)' : 'var(--vl-orange-light)',
+                color: registrationStatus === 'OPEN' ? 'var(--vl-error)' : 'var(--vl-orange)',
+                border: registrationStatus === 'OPEN' ? '1px solid var(--vl-error)' : '1px solid var(--vl-orange)',
+                cursor: closingReg ? 'not-allowed' : 'pointer',
+              }}
+            >
+              {closingReg
+                ? 'Se procesează...'
+                : registrationStatus === 'OPEN'
+                  ? 'Închide acum'
+                  : 'Redeschide'}
+            </button>
           </div>
 
           <Button type="submit" disabled={submitting} className="w-full">

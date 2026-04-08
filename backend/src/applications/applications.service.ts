@@ -44,6 +44,12 @@ export class ApplicationsService {
     if (event.status === 'COMPLETED') {
       throw new ForbiddenException('Aplicațiile pentru acest eveniment sunt închise');
     }
+    if (
+      event.registration_status === 'CLOSED' ||
+      (event.registration_deadline && new Date(event.registration_deadline) < new Date())
+    ) {
+      throw new ForbiddenException('Înscrierile pentru acest eveniment sunt închise');
+    }
 
     const existing = await this.appRepo.findOne({
       where: { user_id: user.id, role_id: dto.role_id },

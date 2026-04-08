@@ -80,6 +80,32 @@ export function Navbar() {
                 Recompense
               </Link>
               <Link
+                href="/marketplace"
+                style={{
+                  fontSize: '0.875rem',
+                  color: 'var(--vl-muted)',
+                  fontWeight: 500,
+                  textDecoration: 'none',
+                  transition: 'color 150ms',
+                }}
+                className="hover:text-[var(--vl-dark)]"
+              >
+                Marketplace
+              </Link>
+              <Link
+                href="/calendar"
+                style={{
+                  fontSize: '0.875rem',
+                  color: 'var(--vl-muted)',
+                  fontWeight: 500,
+                  textDecoration: 'none',
+                  transition: 'color 150ms',
+                }}
+                className="hover:text-[var(--vl-dark)]"
+              >
+                Calendar
+              </Link>
+              <Link
                 href="/leaderboard"
                 style={{
                   fontSize: '0.875rem',

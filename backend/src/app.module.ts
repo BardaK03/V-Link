@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ScheduleModule } from '@nestjs/schedule';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { EventsModule } from './events/events.module';
@@ -12,6 +13,10 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { SkillsModule } from './skills/skills.module';
 import { OrganizationReviewsModule } from './organization-reviews/organization-reviews.module';
 import { AdminModule } from './admin/admin.module';
+import { RegistrationCloserModule } from './registration-closer/registration-closer.module';
+import { ShiftsModule } from './shifts/shifts.module';
+import { CalendarModule } from './calendar/calendar.module';
+import { MarketplaceModule } from './marketplace/marketplace.module';
 
 @Module({
   imports: [
@@ -19,6 +24,8 @@ import { AdminModule } from './admin/admin.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
+
+    ScheduleModule.forRoot(),
 
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -48,6 +55,10 @@ import { AdminModule } from './admin/admin.module';
     SkillsModule,
     OrganizationReviewsModule,
     AdminModule,
+    RegistrationCloserModule,
+    ShiftsModule,
+    CalendarModule,
+    MarketplaceModule,
   ],
 })
 export class AppModule {}

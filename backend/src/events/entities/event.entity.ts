@@ -35,6 +35,12 @@ export class Event {
   @Column({ type: 'text', default: 'ACTIVE' })
   status: 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
 
+  @Column({ type: 'timestamptz', nullable: true })
+  registration_deadline: Date | null;
+
+  @Column({ type: 'text', default: 'OPEN' })
+  registration_status: 'OPEN' | 'CLOSED';
+
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date;
 }

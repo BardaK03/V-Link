@@ -33,6 +33,7 @@ export default function CreateEventPage() {
   const [address, setAddress] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+  const [registrationDeadline, setRegistrationDeadline] = useState('')
   const [roles, setRoles] = useState<RoleForm[]>([
     { role_name: '', description: '', slots_needed: '1', hours_required: '1', points_reward: '0', required_skills: [] },
   ])
@@ -113,6 +114,9 @@ export default function CreateEventPage() {
         start_date: new Date(startDate).toISOString(),
         end_date: new Date(endDate).toISOString(),
         roles: validRoles,
+        registration_deadline: registrationDeadline
+          ? new Date(registrationDeadline).toISOString()
+          : undefined,
       })
       router.push(`/events/${event.id}`)
     } catch (e: unknown) {
@@ -184,6 +188,20 @@ export default function CreateEventPage() {
                 style={inputStyle}
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--vl-text)' }}>
+              Deadline înscrieri <span style={{ color: 'var(--vl-muted)', fontWeight: 400 }}>(opțional)</span>
+            </label>
+            <input
+              type="datetime-local"
+              value={registrationDeadline}
+              onChange={(e) => setRegistrationDeadline(e.target.value)}
+              className="w-full px-3 py-2 text-sm focus:outline-none"
+              style={inputStyle}
+            />
+            <p className="mt-1 text-xs" style={{ color: 'var(--vl-muted)' }}>Înscrierile se vor închide automat la această dată.</p>
           </div>
 
           <div>

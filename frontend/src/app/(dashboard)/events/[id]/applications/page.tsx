@@ -131,9 +131,20 @@ export default function EventApplicationsPage() {
         className="max-w-3xl mx-auto px-4 py-8"
         style={{ background: 'var(--vl-bg)', minHeight: '100vh' }}
       >
-        <div className="mb-4">
+        <div className="mb-4 flex items-center justify-between flex-wrap gap-2">
           <Link href={`/events/${id}`} className="text-sm hover:underline" style={{ color: 'var(--vl-orange)' }}>
             ← Înapoi la eveniment
+          </Link>
+          <Link
+            href={`/events/${id}/shifts`}
+            className="px-3 py-1.5 text-sm rounded-lg"
+            style={{
+              background: 'var(--vl-orange-light)',
+              color: 'var(--vl-orange)',
+              border: '1px solid var(--vl-orange)',
+            }}
+          >
+            Planificare ture →
           </Link>
         </div>
 
