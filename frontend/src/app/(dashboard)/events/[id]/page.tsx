@@ -65,6 +65,7 @@ export default function EventDetailPage() {
   if (!user || !event) return null
 
   const isOwner = event.organizer?.id === user.id || event.organizer_id === user.id
+    || event.organizer?.id === dbUser?.id || event.organizer_id === dbUser?.id
   const isVolunteer = !isOwner && dbUser?.role !== 'ADMIN'
   const isCompleted = event.status === 'COMPLETED'
 
@@ -184,6 +185,9 @@ export default function EventDetailPage() {
                 )}
                 <Link href={`/events/${id}/applications`}>
                   <Button variant="secondary" size="sm">Aplicații</Button>
+                </Link>
+                <Link href={`/events/${id}/shifts`}>
+                  <Button variant="secondary" size="sm">Ture voluntari</Button>
                 </Link>
                 {!isCompleted && (
                   <Button variant="secondary" size="sm" onClick={handleMarkCompleted}>
