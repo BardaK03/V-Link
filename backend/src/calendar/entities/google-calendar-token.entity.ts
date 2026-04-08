@@ -17,7 +17,7 @@ export class GoogleCalendarToken {
   @Column({ type: 'text', default: '' })
   scope: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   calendar_id: string | null;
 
   @Column({ type: 'timestamptz', default: () => 'NOW()' })
