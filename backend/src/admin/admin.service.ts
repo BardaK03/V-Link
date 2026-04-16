@@ -245,7 +245,7 @@ export class AdminService {
 
     const totalsResult = await this.dataSource.query(`
       SELECT
-        ABS(SUM(amount)) FILTER (WHERE amount < 0) AS total_points_spent,
+        ABS(SUM(amount) FILTER (WHERE amount < 0)) AS total_points_spent,
         SUM(amount) FILTER (WHERE amount > 0) AS total_points_earned,
         COUNT(DISTINCT user_id) AS users_with_transactions
       FROM point_transactions
