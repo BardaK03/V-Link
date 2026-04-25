@@ -54,6 +54,19 @@ export function Navbar() {
           {user ? (
             <>
               <Link
+                href="/feed"
+                style={{
+                  fontSize: '0.875rem',
+                  color: 'var(--vl-muted)',
+                  fontWeight: 500,
+                  textDecoration: 'none',
+                  transition: 'color 150ms',
+                }}
+                className="hover:text-[var(--vl-dark)]"
+              >
+                Feed
+              </Link>
+              <Link
                 href="/events"
                 style={{
                   fontSize: '0.875rem',

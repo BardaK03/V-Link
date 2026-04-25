@@ -515,6 +515,46 @@ export function equipCosmetics(data: {
   })
 }
 
+// ── Feed ──────────────────────────────────────────────────────────────────────
+
+export interface FeedOrganizer {
+  id: string
+  display_name: string | null
+  company_name: string | null
+  avatar_url: string | null
+}
+
+export interface FeedRole {
+  id: string
+  role_name: string
+  slots_needed: number
+  required_skills: number[]
+}
+
+export interface FeedEvent {
+  id: string
+  title: string
+  address: string
+  start_date: string
+  end_date: string
+  status: string
+  registration_status: string
+  match_score: number
+  roles: FeedRole[]
+  organizer: FeedOrganizer
+}
+
+export interface FeedResponse {
+  events: FeedEvent[]
+  total: number
+  page: number
+  limit: number
+}
+
+export function getFeedRecommendations(page = 1, limit = 10) {
+  return request<FeedResponse>(`/feed?page=${page}&limit=${limit}`)
+}
+
 // ── Admin ─────────────────────────────────────────────────────────────────────
 
 export interface AdminStats {

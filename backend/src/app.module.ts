@@ -17,6 +17,7 @@ import { RegistrationCloserModule } from './registration-closer/registration-clo
 import { ShiftsModule } from './shifts/shifts.module';
 import { CalendarModule } from './calendar/calendar.module';
 import { MarketplaceModule } from './marketplace/marketplace.module';
+import { FeedModule } from './feed/feed.module';
 
 @Module({
   imports: [
@@ -59,6 +60,7 @@ import { MarketplaceModule } from './marketplace/marketplace.module';
     ShiftsModule,
     CalendarModule,
     MarketplaceModule,
+    FeedModule,
   ],
 })
 export class AppModule {}
