@@ -2,7 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, ILike } from 'typeorm';
-import { GoogleGenerativeAI, Tool, SchemaType } from '@google/generative-ai';
+import { AzureOpenAI } from 'openai';
+import type { ChatCompletionMessageParam, ChatCompletionTool } from 'openai/resources/chat/completions';
 import { UsersService } from '../users/users.service';
 import { UserSkill } from '../user-skills/entities/user-skill.entity';
 import { Skill } from '../skills/entities/skill.entity';
@@ -10,10 +11,74 @@ import { Event } from '../events/entities/event.entity';
 import { Application } from '../applications/entities/application.entity';
 import { HistoryEntryDto } from './dto/chat-message.dto';
 
+const SYSTEM_PROMPT = `Ești asistentul virtual al platformei V-Link, o platformă care conectează organizații
+cu voluntari și ajută oamenii să găsească oportunități de voluntariat potrivite.
+
+Reguli de bază:
+- Răspunde întotdeauna în limba română, pe un ton prietenos, natural și încurajator.
+- Nu inventa niciodată informații despre utilizatori, evenimente sau organizații —
+  obține datele reale exclusiv prin tool-urile disponibile (getUserProfile,
+  getRecommendedEvents, getEventDetails, searchEvents).
+- Când recomanzi un eveniment, explică pe scurt de ce se potrivește cu profilul
+  utilizatorului (skill-uri, interese, istoricul lui de voluntariat).
+- Dacă utilizatorul întreabă despre un eveniment anume, folosește getEventDetails
+  pentru a oferi informații complete și corecte despre roluri, program și organizator.
+- Dacă tool-urile nu returnează informația cerută, spune sincer că nu ai date
+  disponibile în acel moment, în loc să presupui sau să inventezi.
+- Fii concis și concret — evită răspunsuri lungi, formale sau repetitive.`;
+
+const TOOLS: ChatCompletionTool[] = [
+  {
+    type: 'function',
+    function: {
+      name: 'getUserProfile',
+      description: 'Returnează profilul utilizatorului curent: skill-urile sale și numărul de aplicații trimise.',
+      parameters: { type: 'object', properties: {}, required: [] },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'getRecommendedEvents',
+      description: 'Returnează lista de evenimente de voluntariat recomandate pentru utilizator, sortate după scor de potrivire cu skill-urile sale.',
+      parameters: { type: 'object', properties: {}, required: [] },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'getEventDetails',
+      description: 'Returnează detalii complete despre un eveniment: descriere, roluri disponibile, skill-uri necesare, organizator, date.',
+      parameters: {
+        type: 'object',
+        properties: {
+          eventId: { type: 'string', description: 'ID-ul evenimentului' },
+        },
+        required: ['eventId'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'searchEvents',
+      description: 'Caută evenimente de voluntariat după un cuvânt cheie din titlu sau descriere.',
+      parameters: {
+        type: 'object',
+        properties: {
+          keyword: { type: 'string', description: 'Cuvântul cheie de căutat' },
+        },
+        required: ['keyword'],
+      },
+    },
+  },
+];
+
 @Injectable()
 export class ChatbotService {
   private readonly logger = new Logger(ChatbotService.name);
-  private genAI: GoogleGenerativeAI;
+  private client: AzureOpenAI;
+  private deployment: string;
 
   constructor(
     private configService: ConfigService,
@@ -23,94 +88,65 @@ export class ChatbotService {
     @InjectRepository(Event) private eventRepo: Repository<Event>,
     @InjectRepository(Application) private applicationRepo: Repository<Application>,
   ) {
-    const apiKey = this.configService.get<string>('GEMINI_API_KEY');
-    if (!apiKey) throw new Error('GEMINI_API_KEY not configured');
-    this.genAI = new GoogleGenerativeAI(apiKey);
+    const apiKey = this.configService.get<string>('AZURE_OPENAI_API_KEY');
+    const endpoint = this.configService.get<string>('AZURE_OPENAI_ENDPOINT');
+    const deployment = this.configService.get<string>('AZURE_OPENAI_DEPLOYMENT');
+    const apiVersion = this.configService.get<string>('AZURE_OPENAI_API_VERSION');
+
+    if (!apiKey || !endpoint || !deployment || !apiVersion) {
+      throw new Error('AZURE_OPENAI_API_KEY, AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_DEPLOYMENT and AZURE_OPENAI_API_VERSION must be configured');
+    }
+
+    this.deployment = deployment;
+    this.client = new AzureOpenAI({ apiKey, endpoint, deployment, apiVersion });
   }
 
   async chat(userId: string, message: string, history: HistoryEntryDto[]): Promise<string> {
-    const tools: Tool[] = [
-      {
-        functionDeclarations: [
-          {
-            name: 'getUserProfile',
-            description: 'Returnează profilul utilizatorului curent: skill-urile sale și numărul de aplicații trimise.',
-            parameters: { type: SchemaType.OBJECT, properties: {}, required: [] },
-          },
-          {
-            name: 'getRecommendedEvents',
-            description: 'Returnează lista de evenimente de voluntariat recomandate pentru utilizator, sortate după scor de potrivire cu skill-urile sale.',
-            parameters: { type: SchemaType.OBJECT, properties: {}, required: [] },
-          },
-          {
-            name: 'getEventDetails',
-            description: 'Returnează detalii complete despre un eveniment: descriere, roluri disponibile, skill-uri necesare, organizator, date.',
-            parameters: {
-              type: SchemaType.OBJECT,
-              properties: {
-                eventId: { type: SchemaType.STRING, description: 'ID-ul evenimentului' },
-              },
-              required: ['eventId'],
-            },
-          },
-          {
-            name: 'searchEvents',
-            description: 'Caută evenimente de voluntariat după un cuvânt cheie din titlu sau descriere.',
-            parameters: {
-              type: SchemaType.OBJECT,
-              properties: {
-                keyword: { type: SchemaType.STRING, description: 'Cuvântul cheie de căutat' },
-              },
-              required: ['keyword'],
-            },
-          },
-        ],
-      },
+    const messages: ChatCompletionMessageParam[] = [
+      { role: 'system', content: SYSTEM_PROMPT },
+      ...history.map((h): ChatCompletionMessageParam => ({
+        role: h.role === 'model' ? 'assistant' : 'user',
+        content: h.parts,
+      })),
+      { role: 'user', content: message },
     ];
 
-    const model = this.genAI.getGenerativeModel({
-      model: 'gemini-3.5-flash',
-      systemInstruction: `Ești un asistent inteligent pentru platforma V-Link, o platformă de voluntariat.
-Ajuți voluntarii să găsească oportunități de voluntariat potrivite pentru skill-urile și interesele lor.
-Răspunzi în română, pe un ton prietenos și util.
-Când recomanzi evenimente, explică de ce se potrivesc cu profilul utilizatorului.
-Nu inventa informații — folosește întotdeauna tool-urile disponibile pentru a accesa date reale.
-Dacă utilizatorul întreabă despre un voluntariat specific, folosește getEventDetails pentru detalii complete.`,
-      tools,
+    let completion = await this.client.chat.completions.create({
+      model: this.deployment,
+      messages,
+      tools: TOOLS,
     });
-
-    const geminiHistory = history.map((h) => ({
-      role: h.role,
-      parts: [{ text: h.parts }],
-    }));
-
-    const chatSession = model.startChat({ history: geminiHistory });
-
-    let result = await chatSession.sendMessage(message);
-    let response = result.response;
+    let responseMessage = completion.choices[0].message;
 
     let iterations = 0;
-    while (response.functionCalls()?.length && iterations < 5) {
+    while (responseMessage.tool_calls?.length && iterations < 5) {
       iterations++;
-      const calls = response.functionCalls()!;
+      messages.push(responseMessage);
 
-      const functionResponses = await Promise.all(
-        calls.map(async (call) => {
-          const toolResult = await this.executeTool(call.name, call.args as Record<string, unknown>, userId);
-          return {
-            functionResponse: {
-              name: call.name,
-              response: { result: toolResult },
-            },
-          };
-        }),
+      const toolMessages = await Promise.all(
+        responseMessage.tool_calls
+          .filter((call) => call.type === 'function')
+          .map(async (call): Promise<ChatCompletionMessageParam> => {
+            const args = JSON.parse(call.function.arguments || '{}') as Record<string, unknown>;
+            const toolResult = await this.executeTool(call.function.name, args, userId);
+            return {
+              role: 'tool',
+              tool_call_id: call.id,
+              content: JSON.stringify(toolResult),
+            };
+          }),
       );
+      messages.push(...toolMessages);
 
-      result = await chatSession.sendMessage(functionResponses);
-      response = result.response;
+      completion = await this.client.chat.completions.create({
+        model: this.deployment,
+        messages,
+        tools: TOOLS,
+      });
+      responseMessage = completion.choices[0].message;
     }
 
-    return response.text();
+    return responseMessage.content ?? '';
   }
 
   private async executeTool(name: string, args: Record<string, unknown>, userId: string): Promise<unknown> {

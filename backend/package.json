@@ -10,7 +10,6 @@
     "build": "nest build"
   },
   "dependencies": {
-    "@google/generative-ai": "^0.24.1",
     "@nestjs/axios": "^4.0.1",
     "@nestjs/common": "^10.4.22",
     "@nestjs/config": "^4.0.3",
@@ -26,6 +25,7 @@
     "dotenv": "^17.3.1",
     "googleapis": "^171.4.0",
     "nodemailer": "^8.0.4",
+    "openai": "^6.42.0",
     "pg": "^8.19.0",
     "reflect-metadata": "^0.1.14",
     "resend": "^6.10.0",
