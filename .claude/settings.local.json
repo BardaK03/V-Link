@@ -21,7 +21,8 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(npx tsc:*)",
-      "Bash(get-childitem *)"
+      "Bash(get-childitem *)",
+      "Bash(curl -s \"https://vlink-a4hyfuedcuh2g0g5.germanywestcentral-01.azurewebsites.net/events\" --max-time 30)"
     ]
   }
 }
