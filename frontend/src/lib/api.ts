@@ -633,3 +633,17 @@ export interface AdminStats {
 export function getAdminStats() {
   return request<AdminStats>('/admin/stats')
 }
+
+// ── Chatbot ───────────────────────────────────────────────────────────────────
+
+export interface ChatHistory {
+  role: 'user' | 'model'
+  parts: string
+}
+
+export function sendChatMessage(message: string, history: ChatHistory[]) {
+  return request<{ reply: string }>('/chatbot/chat', {
+    method: 'POST',
+    body: JSON.stringify({ message, history }),
+  })
+}

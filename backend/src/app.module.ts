@@ -18,6 +18,7 @@ import { ShiftsModule } from './shifts/shifts.module';
 import { CalendarModule } from './calendar/calendar.module';
 import { MarketplaceModule } from './marketplace/marketplace.module';
 import { FeedModule } from './feed/feed.module';
+import { ChatbotModule } from './chatbot/chatbot.module';
 
 @Module({
   imports: [
@@ -61,6 +62,7 @@ import { FeedModule } from './feed/feed.module';
     CalendarModule,
     MarketplaceModule,
     FeedModule,
+    ChatbotModule,
   ],
 })
 export class AppModule {}

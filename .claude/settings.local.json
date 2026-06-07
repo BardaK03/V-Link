@@ -20,7 +20,8 @@
       "Bash(npm list:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(get-childitem *)"
     ]
   }
 }
