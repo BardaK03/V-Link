@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, ILike } from 'typeorm';
 import { GoogleGenerativeAI, Tool, SchemaType } from '@google/generative-ai';
-import { User } from '../users/entities/user.entity';
+import { UsersService } from '../users/users.service';
 import { UserSkill } from '../user-skills/entities/user-skill.entity';
 import { Skill } from '../skills/entities/skill.entity';
 import { Event } from '../events/entities/event.entity';
@@ -17,7 +17,7 @@ export class ChatbotService {
 
   constructor(
     private configService: ConfigService,
-    @InjectRepository(User) private userRepo: Repository<User>,
+    private usersService: UsersService,
     @InjectRepository(UserSkill) private userSkillRepo: Repository<UserSkill>,
     @InjectRepository(Skill) private skillRepo: Repository<Skill>,
     @InjectRepository(Event) private eventRepo: Repository<Event>,
@@ -69,7 +69,7 @@ export class ChatbotService {
     ];
 
     const model = this.genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-3.5-flash',
       systemInstruction: `Ești un asistent inteligent pentru platforma V-Link, o platformă de voluntariat.
 Ajuți voluntarii să găsească oportunități de voluntariat potrivite pentru skill-urile și interesele lor.
 Răspunzi în română, pe un ton prietenos și util.
@@ -128,18 +128,16 @@ Dacă utilizatorul întreabă despre un voluntariat specific, folosește getEven
     }
   }
 
-  private async getUserProfile(userId: string) {
-    const [user, userSkills] = await Promise.all([
-      this.userRepo.findOne({ where: { id: userId } }),
-      this.userSkillRepo.find({ where: { user_id: userId } }),
-    ]);
-
+  private async getUserProfile(authId: string) {
+    const user = await this.usersService.findByAuthId(authId);
     if (!user) return { error: 'Utilizator negăsit' };
+
+    const userSkills = await this.userSkillRepo.find({ where: { user_id: user.id } });
 
     const skillIds = userSkills.map((us) => us.skill_id);
     const skills = skillIds.length ? await this.skillRepo.findByIds(skillIds) : [];
 
-    const applicationCount = await this.applicationRepo.count({ where: { user_id: userId } });
+    const applicationCount = await this.applicationRepo.count({ where: { user_id: user.id } });
 
     return {
       displayName: user.display_name,
@@ -149,13 +147,13 @@ Dacă utilizatorul întreabă despre un voluntariat specific, folosește getEven
     };
   }
 
-  private async getRecommendedEvents(userId: string) {
-    const user = await this.userRepo.findOne({ where: { id: userId } });
+  private async getRecommendedEvents(authId: string) {
+    const user = await this.usersService.findByAuthId(authId);
     if (!user) return { error: 'Utilizator negăsit' };
 
     const [userSkills, applications, events] = await Promise.all([
-      this.userSkillRepo.find({ where: { user_id: userId } }),
-      this.applicationRepo.find({ where: { user_id: userId } }),
+      this.userSkillRepo.find({ where: { user_id: user.id } }),
+      this.applicationRepo.find({ where: { user_id: user.id } }),
       this.eventRepo.find({
         where: { status: 'ACTIVE', registration_status: 'OPEN' },
         relations: ['roles', 'organizer'],
