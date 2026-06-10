@@ -49,6 +49,13 @@ export class MarketplaceService {
       throw new BadRequestException('Item out of stock');
     }
 
+    const alreadyOwned = await this.inventoryRepo.findOne({
+      where: { user_id: user.id, item_id: item.id },
+    });
+    if (alreadyOwned) {
+      throw new BadRequestException('Ai cumpărat deja acest item.');
+    }
+
     let purchase!: MarketplacePurchase;
 
     await this.dataSource.transaction(async (em) => {

@@ -14,9 +14,16 @@ import {
   removeSkill,
   updateSocialLinks,
   updateProfile,
+  getMyInventory,
+  getMyEquipped,
+  equipCosmetics,
+  type InventoryItem,
+  type EquippedCosmetics,
 } from '@/lib/api'
 import { subscribeToPush, unsubscribeFromPush } from '@/lib/push'
 import { createClient } from '@/lib/supabase/client'
+import { UserAvatar } from '@/components/cosmetics/UserAvatar'
+import { UserName } from '@/components/cosmetics/UserName'
 
 const ROLE_LABELS: Record<string, string> = {
   VOLUNTEER: 'Voluntar',
@@ -30,6 +37,137 @@ const SOCIAL_FIELDS = [
   { key: 'twitter', label: 'Twitter / X', placeholder: 'https://twitter.com/...' },
   { key: 'website', label: 'Website personal', placeholder: 'https://...' },
 ]
+
+const COSMETIC_SLOT_LABELS: Record<string, string> = {
+  COSMETIC_AVATAR_FRAME: 'Frame avatar',
+  COSMETIC_NAME_COLOR: 'Culoare nume',
+  COSMETIC_NAME_ANIMATION: 'Animație nume',
+  COSMETIC_GLOW: 'Aură',
+}
+
+const COSMETIC_SLOT_ORDER = [
+  'COSMETIC_AVATAR_FRAME',
+  'COSMETIC_NAME_COLOR',
+  'COSMETIC_NAME_ANIMATION',
+  'COSMETIC_GLOW',
+]
+
+interface CosmeticsSectionProps {
+  inventory: InventoryItem[]
+  equipped: EquippedCosmetics | null
+  equipping: number | null
+  displayName: string
+  avatarUrl: string | null
+  onEquipToggle: (item: InventoryItem) => void
+}
+
+function CosmeticsSection({
+  inventory,
+  equipped,
+  equipping,
+  displayName,
+  avatarUrl,
+  onEquipToggle,
+}: CosmeticsSectionProps) {
+  const cosmeticItems = inventory.filter((i) => i.item.category !== 'PERK')
+
+  const isEquipped = (itemId: number) =>
+    equipped?.name_color_item?.id === itemId ||
+    equipped?.name_animation_item?.id === itemId ||
+    equipped?.avatar_frame_item?.id === itemId ||
+    equipped?.glow_item?.id === itemId
+
+  const byCategory = COSMETIC_SLOT_ORDER.reduce<Record<string, InventoryItem[]>>((acc, cat) => {
+    acc[cat] = cosmeticItems.filter((i) => i.item.category === cat)
+    return acc
+  }, {})
+
+  return (
+    <section
+      className="rounded-xl border p-5 mt-6"
+      style={{ background: 'var(--vl-surface)', borderColor: 'var(--vl-border)' }}
+    >
+      <h2 className="font-semibold mb-4" style={{ color: 'var(--vl-dark)' }}>
+        Cosmeticele mele
+      </h2>
+
+      {/* Live preview */}
+      <div
+        className="flex items-center gap-3 p-3 rounded-lg mb-5"
+        style={{ background: 'var(--vl-surface-raised)', border: '1px solid var(--vl-border)' }}
+      >
+        <UserAvatar avatarUrl={avatarUrl} displayName={displayName} equipped={equipped} size={48} />
+        <div>
+          <p className="text-xs mb-0.5" style={{ color: 'var(--vl-muted)' }}>Previzualizare</p>
+          <UserName displayName={displayName} equipped={equipped} className="text-sm font-semibold" />
+        </div>
+      </div>
+
+      {cosmeticItems.length === 0 ? (
+        <div className="text-center py-4">
+          <p className="text-sm mb-2" style={{ color: 'var(--vl-muted)' }}>
+            Nu ai cosmetice în inventar.
+          </p>
+          <a
+            href="/marketplace"
+            className="text-sm font-medium hover:underline"
+            style={{ color: 'var(--vl-orange)' }}
+          >
+            Cumpără cosmetice din Marketplace →
+          </a>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-5">
+          {COSMETIC_SLOT_ORDER.filter((cat) => byCategory[cat].length > 0).map((cat) => (
+            <div key={cat}>
+              <p className="text-xs font-semibold mb-2 uppercase tracking-wide" style={{ color: 'var(--vl-muted)' }}>
+                {COSMETIC_SLOT_LABELS[cat]}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {byCategory[cat].map((inv) => {
+                  const on = isEquipped(inv.item.id)
+                  return (
+                    <button
+                      key={inv.id}
+                      type="button"
+                      disabled={equipping === inv.item.id}
+                      onClick={() => onEquipToggle(inv)}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors"
+                      style={{
+                        background: on ? 'var(--vl-orange-light)' : 'var(--vl-bg)',
+                        border: on ? '1px solid var(--vl-orange)' : '1px solid var(--vl-border)',
+                        color: on ? 'var(--vl-orange-hover)' : 'var(--vl-text)',
+                        cursor: equipping === inv.item.id ? 'not-allowed' : 'pointer',
+                        fontWeight: on ? 600 : 400,
+                      }}
+                    >
+                      {equipping === inv.item.id ? (
+                        <span>Se procesează...</span>
+                      ) : (
+                        <>
+                          {on && <span>✓</span>}
+                          <span>{inv.item.name}</span>
+                          {on && (
+                            <span
+                              className="text-xs ml-1"
+                              style={{ color: 'var(--vl-muted)', fontWeight: 400 }}
+                            >
+                              (dezechipează)
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  )
+}
 
 export default function ProfilePage() {
   const { user, dbUser, loading, refreshDbUser } = useAuth()
@@ -54,15 +192,26 @@ export default function ProfilePage() {
   const [savingProfile, setSavingProfile] = useState(false)
   const [profileSaved, setProfileSaved] = useState(false)
 
+  const [inventory, setInventory] = useState<InventoryItem[]>([])
+  const [equipped, setEquipped] = useState<EquippedCosmetics | null>(null)
+  const [equipping, setEquipping] = useState<number | null>(null)
+
   useEffect(() => {
     if (!loading && !user) { router.push('/login'); return }
     if (user) {
-      Promise.all([getMySkills(), getAllSkills()])
-        .then(([mine, all]) => {
+      Promise.all([
+        getMySkills(),
+        getAllSkills(),
+        getMyInventory(),
+        getMyEquipped().catch(() => null),
+      ])
+        .then(([mine, all, inv, eq]) => {
           setMySkills(mine)
           setAllSkills(all)
+          setInventory(inv)
+          if (eq && 'user_id' in eq) setEquipped(eq as EquippedCosmetics)
         })
-        .catch((e) => setError(e.message))
+        .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Eroare'))
     }
   }, [user, loading, router])
 
@@ -205,6 +354,34 @@ export default function ProfilePage() {
     setNotifLoading(false)
   }
 
+  const handleEquipToggle = async (item: InventoryItem) => {
+    const slotMap: Record<string, 'name_color_item_id' | 'name_animation_item_id' | 'avatar_frame_item_id' | 'glow_item_id'> = {
+      COSMETIC_NAME_COLOR: 'name_color_item_id',
+      COSMETIC_NAME_ANIMATION: 'name_animation_item_id',
+      COSMETIC_AVATAR_FRAME: 'avatar_frame_item_id',
+      COSMETIC_GLOW: 'glow_item_id',
+    }
+    const slotKey = slotMap[item.item.category]
+    if (!slotKey) return
+
+    const isOn =
+      equipped?.name_color_item?.id === item.item.id ||
+      equipped?.name_animation_item?.id === item.item.id ||
+      equipped?.avatar_frame_item?.id === item.item.id ||
+      equipped?.glow_item?.id === item.item.id
+
+    setEquipping(item.item.id)
+    setError(null)
+    try {
+      const updated = await equipCosmetics({ [slotKey]: isOn ? null : item.item.id })
+      setEquipped(updated)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Eroare la echipare')
+    } finally {
+      setEquipping(null)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--vl-bg)' }}>
@@ -250,16 +427,12 @@ export default function ProfilePage() {
         >
           <h2 className="font-semibold mb-4" style={{ color: 'var(--vl-dark)' }}>Poza de profil</h2>
           <div className="flex items-center gap-5">
-            <div
-              className="rounded-full flex items-center justify-center overflow-hidden shrink-0"
-              style={{ width: 72, height: 72, background: 'var(--vl-info-bg)', border: '2px solid var(--vl-border)' }}
-            >
-              {avatarUrl ? (
-                <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-              ) : (
-                <span style={{ fontSize: '2rem', color: 'var(--vl-muted)' }}>👤</span>
-              )}
-            </div>
+            <UserAvatar
+              avatarUrl={avatarUrl}
+              displayName={displayName || user?.email}
+              equipped={equipped}
+              size={72}
+            />
             <div>
               <label
                 htmlFor="avatar-upload"
@@ -450,6 +623,16 @@ export default function ProfilePage() {
             </p>
           )}
         </section>
+
+        {/* Cosmetics */}
+        <CosmeticsSection
+          inventory={inventory}
+          equipped={equipped}
+          equipping={equipping}
+          displayName={displayName || user?.email || '?'}
+          avatarUrl={avatarUrl}
+          onEquipToggle={handleEquipToggle}
+        />
 
         {/* Push Notifications */}
         {notifSupported && (

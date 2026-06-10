@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext'
 import { Navbar } from '@/components/layout/Navbar'
 import {
   getMarketplaceItems,
+  getMyInventory,
   purchaseItem,
   type MarketplaceItem,
   type ItemCategory,
@@ -32,23 +33,26 @@ const CATEGORY_ICONS: Record<string, string> = {
 function ItemCard({
   item,
   userPoints,
+  owned,
   onBuy,
   buying,
 }: {
   item: MarketplaceItem
   userPoints: number
+  owned: boolean
   onBuy: (item: MarketplaceItem) => void
   buying: number | null
 }) {
   const canAfford = userPoints >= item.point_cost
   const isOutOfStock = item.stock !== null && item.stock <= 0
+  const canBuy = !owned && canAfford && !isOutOfStock
 
   return (
     <div
       className="flex flex-col rounded-xl p-4 gap-3"
       style={{
-        background: 'var(--vl-surface)',
-        border: '1px solid var(--vl-border)',
+        background: owned ? 'var(--vl-success-bg)' : 'var(--vl-surface)',
+        border: owned ? '1px solid var(--vl-success)' : '1px solid var(--vl-border)',
         borderRadius: 'var(--vl-radius-lg)',
       }}
     >
@@ -64,7 +68,14 @@ function ItemCard({
             </p>
           )}
         </div>
-        {item.stock !== null && (
+        {owned ? (
+          <span
+            className="text-xs px-2 py-0.5 rounded-full font-semibold"
+            style={{ background: 'var(--vl-success-bg)', color: 'var(--vl-success)', border: '1px solid var(--vl-success)' }}
+          >
+            ✓ Deținut
+          </span>
+        ) : item.stock !== null ? (
           <span
             className="text-xs px-2 py-0.5 rounded-full"
             style={{
@@ -74,31 +85,31 @@ function ItemCard({
           >
             {isOutOfStock ? 'Epuizat' : `${item.stock} rămase`}
           </span>
-        )}
+        ) : null}
       </div>
 
       <div className="flex items-center justify-between mt-auto">
         <div
           className="px-3 py-1 rounded-full text-sm font-bold"
           style={{
-            background: canAfford ? 'var(--vl-orange-light)' : 'var(--vl-bg)',
-            color: canAfford ? 'var(--vl-orange)' : 'var(--vl-muted)',
+            background: canAfford && !owned ? 'var(--vl-orange-light)' : 'var(--vl-bg)',
+            color: canAfford && !owned ? 'var(--vl-orange)' : 'var(--vl-muted)',
           }}
         >
           {item.point_cost} puncte
         </div>
         <button
           type="button"
-          disabled={!canAfford || isOutOfStock || buying === item.id}
+          disabled={!canBuy || buying === item.id}
           onClick={() => onBuy(item)}
           className="px-3 py-1.5 text-sm rounded-lg"
           style={{
-            background: canAfford && !isOutOfStock ? 'var(--vl-orange)' : 'var(--vl-border)',
-            color: canAfford && !isOutOfStock ? '#fff' : 'var(--vl-muted)',
-            cursor: canAfford && !isOutOfStock ? 'pointer' : 'not-allowed',
+            background: canBuy ? 'var(--vl-orange)' : 'var(--vl-border)',
+            color: canBuy ? '#fff' : 'var(--vl-muted)',
+            cursor: canBuy ? 'pointer' : 'not-allowed',
           }}
         >
-          {buying === item.id ? 'Se cumpără...' : 'Cumpără'}
+          {buying === item.id ? 'Se cumpără...' : owned ? 'Deținut' : 'Cumpără'}
         </button>
       </div>
     </div>
@@ -110,6 +121,7 @@ export default function MarketplacePage() {
   const router = useRouter()
 
   const [items, setItems] = useState<MarketplaceItem[]>([])
+  const [ownedItemIds, setOwnedItemIds] = useState<Set<number>>(new Set())
   const [activeCategory, setActiveCategory] = useState<ItemCategory | 'ALL'>('ALL')
   const [fetching, setFetching] = useState(true)
   const [buying, setBuying] = useState<number | null>(null)
@@ -119,8 +131,11 @@ export default function MarketplacePage() {
   useEffect(() => {
     if (!loading && !user) { router.push('/login'); return }
     if (user) {
-      getMarketplaceItems()
-        .then(setItems)
+      Promise.all([getMarketplaceItems(), getMyInventory()])
+        .then(([allItems, inventory]) => {
+          setItems(allItems)
+          setOwnedItemIds(new Set(inventory.map((inv) => inv.item_id)))
+        })
         .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Eroare'))
         .finally(() => setFetching(false))
     }
@@ -138,6 +153,7 @@ export default function MarketplacePage() {
     setSuccessMsg(null)
     try {
       const purchase = await purchaseItem(item.id)
+      setOwnedItemIds((prev) => new Set([...prev, item.id]))
       setSuccessMsg(
         purchase.redemption_code
           ? `Cumpărat! Codul tău: ${purchase.redemption_code}`
@@ -246,6 +262,7 @@ export default function MarketplacePage() {
                 key={item.id}
                 item={item}
                 userPoints={userPoints}
+                owned={ownedItemIds.has(item.id)}
                 onBuy={handleBuy}
                 buying={buying}
               />
