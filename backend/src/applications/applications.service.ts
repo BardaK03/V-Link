@@ -60,8 +60,7 @@ export class ApplicationsService {
     const userSkills = await this.userSkillRepo.find({ where: { user_id: user.id } });
     const volunteerSkillIds = userSkills.map((us) => us.skill_id);
 
-    // Calculează scorul de potrivire (null dacă FastAPI e down)
-    const matchScore = await this.matchingService.computeScore(
+    const matchScore = this.matchingService.computeScore(
       volunteerSkillIds,
       role.required_skills ?? [],
     );
