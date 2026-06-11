@@ -56,9 +56,6 @@ export class ShiftAssignment {
   @Column({ type: 'numeric', precision: 5, scale: 2 })
   hours: number;
 
-  @Column({ type: 'varchar', nullable: true })
-  google_event_id: string | null;
-
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date;
 }

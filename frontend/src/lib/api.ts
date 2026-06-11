@@ -74,7 +74,6 @@ export interface ShiftAssignment {
   start_time: string
   end_time: string
   hours: number
-  google_event_id: string | null
   created_at: string
   user?: { id: string; email: string; display_name: string | null; avatar_url: string | null }
   role?: EventRole
@@ -280,13 +279,6 @@ export function getMyCalendar(from?: string, to?: string) {
   return request<CalendarEntry[]>(`/calendar/me${q ? `?${q}` : ''}`)
 }
 
-export function getGoogleCalendarStatus() {
-  return request<{ connected: boolean }>('/calendar/google/status')
-}
-
-export function disconnectGoogleCalendar() {
-  return request<{ disconnected: boolean }>('/calendar/google/disconnect', { method: 'DELETE' })
-}
 
 // ── Gamification ───────────────────────────────────────────────────────────────
 
