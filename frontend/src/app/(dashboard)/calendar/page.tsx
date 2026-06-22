@@ -136,7 +136,7 @@ export default function CalendarPage() {
               eventContent={(arg) => (
                 <div className="px-1 py-0.5 text-xs leading-tight overflow-hidden">
                   <div className="font-semibold">
-                    {arg.event.title.slice(0, 15)}
+                    {arg.event.title.slice(0, 22)}
                   </div>
                   {arg.event.extendedProps.time_range && (
                     <div style={{ opacity: 0.85 }}>
