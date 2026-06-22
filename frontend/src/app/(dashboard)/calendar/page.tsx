@@ -133,10 +133,12 @@ export default function CalendarPage() {
                 if (eventId) router.push(`/events/${eventId}`)
               }}
               eventContent={(arg) => (
-                <div className="px-1 py-0.5 text-xs truncate">
-                  <strong>{arg.event.title}</strong>
-                  {arg.event.extendedProps.hours && (
-                    <span style={{ opacity: 0.8 }}> · {arg.event.extendedProps.hours}h</span>
+                <div className="px-1 py-0.5 text-xs leading-tight">
+                  <div className="truncate font-semibold">{arg.event.title}</div>
+                  {arg.event.extendedProps.hours != null && (
+                    <div style={{ opacity: 0.85 }}>
+                      {Number(arg.event.extendedProps.hours)}h de prezență
+                    </div>
                   )}
                 </div>
               )}
