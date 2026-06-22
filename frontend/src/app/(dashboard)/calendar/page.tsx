@@ -29,6 +29,7 @@ function toFcEvent(entry: CalendarEntry): EventInput {
       event_id: entry.event_id,
       role_name: entry.role_name,
       hours: entry.hours,
+      time_range: `${entry.start_time.slice(0, 5)}-${entry.end_time.slice(0, 5)}`,
     },
     backgroundColor: 'var(--vl-orange)',
     borderColor: 'var(--vl-orange)',
@@ -133,11 +134,13 @@ export default function CalendarPage() {
                 if (eventId) router.push(`/events/${eventId}`)
               }}
               eventContent={(arg) => (
-                <div className="px-1 py-0.5 text-xs leading-tight">
-                  <div className="truncate font-semibold">{arg.event.title}</div>
-                  {arg.event.extendedProps.hours != null && (
+                <div className="px-1 py-0.5 text-xs leading-tight overflow-hidden">
+                  <div className="font-semibold">
+                    {arg.event.title.slice(0, 15)}
+                  </div>
+                  {arg.event.extendedProps.time_range && (
                     <div style={{ opacity: 0.85 }}>
-                      {Number(arg.event.extendedProps.hours)}h de prezență
+                      {arg.event.extendedProps.time_range}
                     </div>
                   )}
                 </div>
