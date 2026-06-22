@@ -18,6 +18,11 @@ export interface CalendarEntry {
   role_name?: string
 }
 
+/** Normalize a Postgres `time` value (HH:MM:SS) to HH:MM. */
+function toHourMinute(time: string): string {
+  return time.slice(0, 5);
+}
+
 @Injectable()
 export class CalendarService {
   constructor(
@@ -48,8 +53,10 @@ export class CalendarService {
       type: 'shift',
       title: `${s.role?.role_name ?? 'Tură'} — ${s.event?.title ?? 'Eveniment'}`,
       date: s.shift_date,
-      start_time: s.start_time,
-      end_time: s.end_time,
+      // Postgres `time` columns come back as HH:MM:SS — trim to the HH:MM
+      // shape the CalendarEntry contract documents and the frontend expects.
+      start_time: toHourMinute(s.start_time),
+      end_time: toHourMinute(s.end_time),
       hours: s.hours,
       event_id: s.event_id,
       event_title: s.event?.title ?? '',

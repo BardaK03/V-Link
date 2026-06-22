@@ -30,3 +30,4 @@ Diplome NFT 	UI claim & vizualizare NFT 	NestJS – NFT Service 	Work in progres
 •	Marketplace de Beneficii – Voluntarii își pot folosi punctele câștigate pentru a obține reduceri la bilete, produse sau cursuri online. 
 •	Integrarea diplomelor drept NFT-uri (opțional, dacă nu e destul de complex proiectul). 
 
+I.1.2 Arhitectura stratificată și principiile SOLID.- Arhitectura V-Link urmărește principiile SOLID, cu aplicare directă în separarea modulelor NestJS (SRP), composabilitatea guard-urilor (OCP, LSP) și injecția dependențelor prin constructori (DIP). Constrângerile practice ale unui proiect individual au condus la câteva servicii cu responsabilități extinse (ApplicationsService,ChatbotService), care reprezintă direcții de refactorizare pentru versiunile viitoare.

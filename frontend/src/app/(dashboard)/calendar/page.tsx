@@ -12,12 +12,19 @@ import { useAuth } from '@/context/AuthContext'
 import { Navbar } from '@/components/layout/Navbar'
 import { getMyCalendar, type CalendarEntry } from '@/lib/api'
 
+// Build a valid ISO datetime from a date and a HH:MM or HH:MM:SS time.
+// Tolerating both shapes guards against a stray HH:MM:SS producing an
+// invalid `...T09:00:00:00` string that FullCalendar would silently drop.
+function toIso(date: string, time: string): string {
+  return `${date}T${time.slice(0, 5)}:00`
+}
+
 function toFcEvent(entry: CalendarEntry): EventInput {
   return {
     id: entry.id,
     title: entry.title,
-    start: `${entry.date}T${entry.start_time}:00`,
-    end: `${entry.date}T${entry.end_time}:00`,
+    start: toIso(entry.date, entry.start_time),
+    end: toIso(entry.date, entry.end_time),
     extendedProps: {
       event_id: entry.event_id,
       role_name: entry.role_name,
@@ -35,6 +42,7 @@ export default function CalendarPage() {
 
   const [entries, setEntries] = useState<CalendarEntry[]>([])
   const [fetching, setFetching] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const calendarRef = useRef<FullCalendar>(null)
 
@@ -43,8 +51,10 @@ export default function CalendarPage() {
     if (!user) return
 
     getMyCalendar()
-      .then(setEntries)
-      .catch(() => {})
+      .then((data) => { setEntries(data); setError(null) })
+      .catch((e: unknown) =>
+        setError(e instanceof Error ? e.message : 'Eroare la încărcarea calendarului'),
+      )
       .finally(() => setFetching(false))
   }, [user, loading, router])
 
@@ -87,6 +97,14 @@ export default function CalendarPage() {
             borderRadius: 'var(--vl-radius-lg)',
           }}
         >
+          {error && (
+            <div
+              className="mb-4 p-3 rounded-lg text-sm"
+              style={{ background: 'var(--vl-error-bg)', color: 'var(--vl-error)' }}
+            >
+              {error}
+            </div>
+          )}
           {fetching ? (
             <div className="flex items-center justify-center h-64">
               <p style={{ color: 'var(--vl-muted)' }}>Se încarcă calendarul...</p>
